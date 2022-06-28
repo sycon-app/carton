@@ -39,7 +39,7 @@ export default function Instructions({ fitResult }: { fitResult: FitResult }) {
             borderStyle="dashed"
             fontFamily="mono"
         >
-            <HStack fontWeight="bold" mb={2}>
+            <HStack fontWeight="bold" mb={2} flexWrap="wrap">
                 <Text>
                     {unalteredDimensions.length}x{unalteredDimensions.width}x
                     {unalteredDimensions.height}

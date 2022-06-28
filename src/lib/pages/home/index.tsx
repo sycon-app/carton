@@ -16,16 +16,16 @@ import {
     useToast,
     VStack,
 } from "@chakra-ui/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { MdPrint } from "react-icons/md";
 
+import { GlobalContext } from "lib/context/global";
 import type { BoxData } from "lib/structs/BoxData";
 import type { FitResult } from "lib/structs/FitResult";
 import { moveItemsToEnd } from "lib/util/array";
 import { boxDefaults } from "lib/util/boxDefaults";
 import { findFits, hasExcessiveVoidSpace } from "lib/util/findPotentialBoxes";
 import useInstructionsPrinting from "lib/util/hooks/useInstructionsPrinting";
-import usePersistentBoxData from "lib/util/hooks/usePersistentBoxData";
 
 import Instructions from "./components/Instructions";
 import VisualAid from "./components/VisualAid";
@@ -33,7 +33,7 @@ import VisualAid from "./components/VisualAid";
 const Home = () => {
     const toast = useToast();
 
-    const { boxes } = usePersistentBoxData(true);
+    const { boxes } = useContext(GlobalContext);
     const [itemLength, setItemLength] = useState(1);
     const [itemWidth, setItemWidth] = useState(1);
     const [itemHeight, setItemHeight] = useState(1);

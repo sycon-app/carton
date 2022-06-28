@@ -19,19 +19,19 @@ import {
     VStack,
     Button,
     Checkbox,
-    useToast,
     Badge,
 } from "@chakra-ui/react";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 
-import usePersistentBoxData from "lib/util/hooks/usePersistentBoxData";
+import { GlobalContext } from "lib/context/global";
 
 export default function Settings() {
     const { isOpen, onOpen, onClose } = useDisclosure();
-    const { boxes, setBoxes, isRunningDBTransaction } = usePersistentBoxData();
-    const [boxLength, setBoxLength] = useState(1);
-    const [boxWidth, setBoxWidth] = useState(1);
-    const [boxHeight, setBoxHeight] = useState(1);
+    const { boxes, setBoxes, isRunningDBTransaction } =
+        useContext(GlobalContext);
+    const [boxLength, setBoxLength] = useState<number>();
+    const [boxWidth, setBoxWidth] = useState<number>();
+    const [boxHeight, setBoxHeight] = useState<number>();
     const [prefersNoStacking, setPrefersNoStacking] = useState(false);
     const [prefersNoAdjusting, setPrefersNoAdjusting] = useState(false);
     const lInputRef = useRef<HTMLInputElement>(null);
@@ -41,27 +41,31 @@ export default function Settings() {
     const [isBWidthInvalid, setIsBWidthInvalid] = useState(false);
     const [isBHeightInvalid, setIsBHeightInvalid] = useState(false);
 
-    const toast = useToast();
-
     useEffect(() => {
-        if (!boxLength || boxLength <= 0 || boxLength % 1 !== 0) {
+        if (
+            boxLength !== undefined &&
+            (boxLength <= 0 || boxLength % 1 !== 0)
+        ) {
             setIsBLengthInvalid(true);
         } else {
             setIsBLengthInvalid(false);
         }
 
         if (
-            !boxWidth ||
-            boxWidth <= 0 ||
-            boxWidth % 1 !== 0 ||
-            boxWidth > boxLength
+            boxWidth !== undefined &&
+            (boxWidth <= 0 ||
+                boxWidth % 1 !== 0 ||
+                (boxLength && boxWidth > boxLength))
         ) {
             setIsBWidthInvalid(true);
         } else {
             setIsBWidthInvalid(false);
         }
 
-        if (!boxHeight || boxHeight <= 0 || boxHeight % 1 !== 0) {
+        if (
+            boxHeight !== undefined &&
+            (boxHeight <= 0 || boxHeight % 1 !== 0)
+        ) {
             setIsBHeightInvalid(true);
         } else {
             setIsBHeightInvalid(false);
@@ -88,13 +92,14 @@ export default function Settings() {
                 placement="right"
                 onClose={onClose}
                 size="sm"
+                allowPinchZoom
             >
                 <DrawerOverlay />
                 <DrawerContent>
                     <DrawerCloseButton />
                     <DrawerHeader>
                         Manage available boxes{" "}
-                        <Spinner hidden={!isRunningDBTransaction} />
+                        <Spinner hidden={!isRunningDBTransaction} size="sm" />
                     </DrawerHeader>
 
                     <DrawerBody>
@@ -109,7 +114,11 @@ export default function Settings() {
                                     >
                                         Length
                                     </FormLabel>
-                                    <NumberInput size="sm" id="blength">
+                                    <NumberInput
+                                        size="sm"
+                                        id="blength"
+                                        value={boxLength}
+                                    >
                                         <NumberInputField
                                             p={4}
                                             placeholder="Length"
@@ -149,7 +158,11 @@ export default function Settings() {
                                     >
                                         Width
                                     </FormLabel>
-                                    <NumberInput size="sm" id="bwidth">
+                                    <NumberInput
+                                        size="sm"
+                                        id="bwidth"
+                                        value={boxWidth}
+                                    >
                                         <NumberInputField
                                             p={4}
                                             placeholder="Width"
@@ -189,7 +202,11 @@ export default function Settings() {
                                     >
                                         Height
                                     </FormLabel>
-                                    <NumberInput size="sm" id="bheight">
+                                    <NumberInput
+                                        size="sm"
+                                        id="bheight"
+                                        value={boxHeight}
+                                    >
                                         <NumberInputField
                                             p={4}
                                             placeholder="Height"
@@ -240,10 +257,19 @@ export default function Settings() {
                             isDisabled={
                                 isBLengthInvalid ||
                                 isBWidthInvalid ||
-                                isBHeightInvalid
+                                isBHeightInvalid ||
+                                !boxLength ||
+                                !boxWidth ||
+                                !boxHeight
                             }
                             onClick={() => {
-                                if (!boxes) return;
+                                if (
+                                    !boxes ||
+                                    !boxLength ||
+                                    !boxWidth ||
+                                    !boxHeight
+                                )
+                                    return;
 
                                 setBoxes([
                                     ...boxes,
@@ -260,12 +286,9 @@ export default function Settings() {
                                     },
                                 ]);
 
-                                toast({
-                                    status: "success",
-                                    title: "Box list updated.",
-                                    description:
-                                        "The list of available boxes has been updated. Refresh your page to see the results.",
-                                });
+                                setBoxWidth(0);
+                                setBoxLength(0);
+                                setBoxHeight(0);
                             }}
                         >
                             Add
@@ -275,57 +298,58 @@ export default function Settings() {
                                 backgroundColor="yellow.100"
                                 color="yellow.800"
                                 p={4}
+                                borderRadius="md"
                             >
                                 First load detected. Reload the page to use the
                                 settings panel. If this message is unexpected,
                                 please file a bug report.
                             </Text>
                         )}
-                        {boxes?.map((box) => (
-                            <HStack
-                                key={`${box.dimensions.length}x${box.dimensions.width}x${box.dimensions.height}`}
-                                py={2}
-                                borderTopWidth="thin"
-                            >
-                                <Text fontWeight="bold">
-                                    {box.dimensions.length}x
-                                    {box.dimensions.width}x
-                                    {box.dimensions.height}{" "}
-                                    {box.meta.preferNoStack && (
-                                        <Badge colorScheme="red">
-                                            No stacking
-                                        </Badge>
-                                    )}{" "}
-                                    {box.meta.preferNoAdjust && (
-                                        <Badge colorScheme="red">
-                                            No adjusting
-                                        </Badge>
-                                    )}
-                                </Text>
-                                <Spacer />
-                                <IconButton
-                                    variant="ghost"
-                                    colorScheme="red"
-                                    size="sm"
-                                    aria-label="Remove"
-                                    icon={<MinusIcon />}
-                                    onClick={() => {
-                                        setBoxes(
-                                            boxes.filter(
-                                                (searchBox) => searchBox !== box
-                                            )
-                                        );
-
-                                        toast({
-                                            status: "success",
-                                            title: "Box list updated.",
-                                            description:
-                                                "The list of available boxes has been updated. Refresh your page to see the results.",
-                                        });
-                                    }}
-                                />
-                            </HStack>
-                        ))}
+                        {boxes
+                            ?.sort((a, b) => {
+                                return (
+                                    a.dimensions.length - b.dimensions.length
+                                );
+                            })
+                            .map((box) => (
+                                <HStack
+                                    key={`${box.dimensions.length}x${box.dimensions.width}x${box.dimensions.height}`}
+                                    py={2}
+                                    borderTopWidth="thin"
+                                >
+                                    <Text fontWeight="bold">
+                                        {box.dimensions.length}x
+                                        {box.dimensions.width}x
+                                        {box.dimensions.height}{" "}
+                                        {box.meta.preferNoStack && (
+                                            <Badge colorScheme="red">
+                                                No stacking
+                                            </Badge>
+                                        )}{" "}
+                                        {box.meta.preferNoAdjust && (
+                                            <Badge colorScheme="red">
+                                                No adjusting
+                                            </Badge>
+                                        )}
+                                    </Text>
+                                    <Spacer />
+                                    <IconButton
+                                        variant="ghost"
+                                        colorScheme="red"
+                                        size="sm"
+                                        aria-label="Remove"
+                                        icon={<MinusIcon />}
+                                        onClick={() => {
+                                            setBoxes(
+                                                boxes.filter(
+                                                    (searchBox) =>
+                                                        searchBox !== box
+                                                )
+                                            );
+                                        }}
+                                    />
+                                </HStack>
+                            ))}
                     </DrawerBody>
                 </DrawerContent>
             </Drawer>
