@@ -45,11 +45,17 @@ const Home = () => {
     }, [fitResults, resultMethod]);
 
     useEffect(() => {
-        if (resultMethod === "AS_IS") setResultIndex(0);
+        setResultIndex(0);
 
-        setResultMethod("AS_IS");
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [itemLength, itemWidth, itemHeight, itemPadding]);
+        if ((fitResults?.AS_IS.length ?? 0) > 0) setResultMethod("AS_IS");
+        else if ((fitResults?.STACKED.length ?? 0) > 0)
+            setResultMethod("STACKED");
+        else if ((fitResults?.MODIFIED.length ?? 0) > 0)
+            setResultMethod("MODIFIED");
+        else if ((fitResults?.MODIFIED_AND_STACKED.length ?? 0) > 0)
+            setResultMethod("MODIFIED_AND_STACKED");
+        else setResultMethod("AS_IS");
+    }, [fitResults]);
 
     useEffect(() => {
         setResultIndex(0);
