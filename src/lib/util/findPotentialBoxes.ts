@@ -33,10 +33,10 @@ export function hasExcessiveVoidSpace(fit: FitResult, factor = 1) {
 export function compareFits(
     fit1: FitResult,
     fit2: FitResult,
-    omit: (keyof FitResult)[]
+    includeKeys: (keyof FitResult)[]
 ) {
-    const keys = (Object.keys(fit1) as (keyof FitResult)[]).filter(
-        (key) => !omit.includes(key)
+    const keys = (Object.keys(fit1) as (keyof FitResult)[]).filter((key) =>
+        includeKeys.includes(key)
     );
 
     let isSame = true;

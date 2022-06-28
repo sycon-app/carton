@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 /* eslint-disable sonarjs/no-identical-functions */
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
 import {
@@ -69,6 +70,7 @@ const Home = () => {
         setResultIndex(0);
     }, [resultMethod]);
 
+    // eslint-disable-next-line sonarjs/cognitive-complexity
     useEffect(() => {
         let boxList: BoxData[];
 
@@ -99,88 +101,231 @@ const Home = () => {
             boxList,
             itemPadding
         );
-        const easyFitsWithRotation1 = findFits(
-            ["AS_IS", "ROTATE_LENGTHWISE"],
-            { length: itemLength, width: itemWidth, height: itemHeight },
-            boxList,
-            itemPadding
-        );
-        const easyFitsWithRotation2 = findFits(
-            ["AS_IS", "ROTATE_WIDTHWISE"],
-            { length: itemLength, width: itemWidth, height: itemHeight },
-            boxList,
-            itemPadding
-        );
+        if (itemLength !== itemHeight || itemWidth !== itemHeight) {
+            easyFits.push(
+                ...findFits(
+                    ["AS_IS", "ROTATE_LENGTHWISE"],
+                    {
+                        length: itemLength,
+                        width: itemWidth,
+                        height: itemHeight,
+                    },
+                    boxList,
+                    itemPadding
+                ) /* .filter(
+                    (fit) =>
+                        !easyFits.some((easyFit) =>
+                            compareFits(easyFit, fit, [
+                                "alteredDimensions",
+                                "stackCount",
+                                "unalteredDimensions",
+                            ])
+                        )
+                ) */
+            );
+        }
+        if (
+            itemLength !== itemWidth &&
+            (itemLength !== itemHeight || itemWidth !== itemHeight)
+        ) {
+            easyFits.push(
+                ...findFits(
+                    ["AS_IS", "ROTATE_WIDTHWISE"],
+                    {
+                        length: itemLength,
+                        width: itemWidth,
+                        height: itemHeight,
+                    },
+                    boxList,
+                    itemPadding
+                ) /* .filter(
+                    (fit) =>
+                        !easyFits.some((easyFit) =>
+                            compareFits(easyFit, fit, [
+                                "alteredDimensions",
+                                "stackCount",
+                                "unalteredDimensions",
+                            ])
+                        )
+                ) */
+            );
+        }
+
         const stackFits = findFits(
             ["STACK"],
             { length: itemLength, width: itemWidth, height: itemHeight },
             boxList,
             itemPadding
         );
-        const stackFitsWithRotation1 = findFits(
-            ["STACK", "ROTATE_LENGTHWISE"],
-            { length: itemLength, width: itemWidth, height: itemHeight },
-            boxList,
-            itemPadding
-        );
-        const stackFitsWithRotation2 = findFits(
-            ["STACK", "ROTATE_WIDTHWISE"],
-            { length: itemLength, width: itemWidth, height: itemHeight },
-            boxList,
-            itemPadding
-        );
+        if (itemLength !== itemHeight || itemWidth !== itemHeight) {
+            stackFits.push(
+                ...findFits(
+                    ["STACK", "ROTATE_LENGTHWISE"],
+                    {
+                        length: itemLength,
+                        width: itemWidth,
+                        height: itemHeight,
+                    },
+                    boxList,
+                    itemPadding
+                ) /* .filter(
+                    (fit) =>
+                        !stackFits.some((stackFit) =>
+                            compareFits(stackFit, fit, [
+                                "alteredDimensions",
+                                "stackCount",
+                                "unalteredDimensions",
+                            ])
+                        )
+                ) */
+            );
+        }
+        if (
+            itemLength !== itemWidth &&
+            (itemLength !== itemHeight || itemWidth !== itemHeight)
+        ) {
+            stackFits.push(
+                ...findFits(
+                    ["STACK", "ROTATE_WIDTHWISE"],
+                    {
+                        length: itemLength,
+                        width: itemWidth,
+                        height: itemHeight,
+                    },
+                    boxList,
+                    itemPadding
+                ) /* .filter(
+                    (fit) =>
+                        !stackFits.some((stackFit) =>
+                            compareFits(stackFit, fit, [
+                                "alteredDimensions",
+                                "stackCount",
+                                "unalteredDimensions",
+                            ])
+                        )
+                ) */
+            );
+        }
+
         const modifyFits = findFits(
             ["MODIFY"],
             { length: itemLength, width: itemWidth, height: itemHeight },
             boxList,
             itemPadding
         );
-        const modifyFitsWithRotation1 = findFits(
-            ["MODIFY", "ROTATE_LENGTHWISE"],
-            { length: itemLength, width: itemWidth, height: itemHeight },
-            boxList,
-            itemPadding
-        );
-        const modifyFitsWithRotation2 = findFits(
-            ["MODIFY", "ROTATE_WIDTHWISE"],
-            { length: itemLength, width: itemWidth, height: itemHeight },
-            boxList,
-            itemPadding
-        );
+        if (itemLength !== itemHeight || itemWidth !== itemHeight) {
+            modifyFits.push(
+                ...findFits(
+                    ["MODIFY", "ROTATE_LENGTHWISE"],
+                    {
+                        length: itemLength,
+                        width: itemWidth,
+                        height: itemHeight,
+                    },
+                    boxList,
+                    itemPadding
+                ) /* .filter(
+                    (fit) =>
+                        !modifyFits.some((modifyFit) =>
+                            compareFits(modifyFit, fit, [
+                                "alteredDimensions",
+                                "stackCount",
+                                "unalteredDimensions",
+                            ])
+                        )
+                ) */
+            );
+        }
+        if (
+            itemLength !== itemWidth &&
+            (itemLength !== itemHeight || itemWidth !== itemHeight)
+        ) {
+            modifyFits.push(
+                ...findFits(
+                    ["MODIFY", "ROTATE_WIDTHWISE"],
+                    {
+                        length: itemLength,
+                        width: itemWidth,
+                        height: itemHeight,
+                    },
+                    boxList,
+                    itemPadding
+                ) /* .filter(
+                    (fit) =>
+                        !modifyFits.some((modifyFit) =>
+                            compareFits(modifyFit, fit, [
+                                "alteredDimensions",
+                                "stackCount",
+                                "unalteredDimensions",
+                            ])
+                        )
+                ) */
+            );
+        }
+
         const complexFits = findFits(
             ["MODIFY_AND_STACK"],
             { length: itemLength, width: itemWidth, height: itemHeight },
             boxList,
             itemPadding
         );
-        const complexFitsWithRotation1 = findFits(
-            ["MODIFY_AND_STACK", "ROTATE_LENGTHWISE"],
-            { length: itemLength, width: itemWidth, height: itemHeight },
-            boxList,
-            itemPadding
-        );
-        const complexFitsWithRotation2 = findFits(
-            ["MODIFY_AND_STACK", "ROTATE_WIDTHWISE"],
-            { length: itemLength, width: itemWidth, height: itemHeight },
-            boxList,
-            itemPadding
-        );
+        if (itemLength !== itemHeight || itemWidth !== itemHeight) {
+            complexFits.push(
+                ...findFits(
+                    ["MODIFY_AND_STACK", "ROTATE_LENGTHWISE"],
+                    {
+                        length: itemLength,
+                        width: itemWidth,
+                        height: itemHeight,
+                    },
+                    boxList,
+                    itemPadding
+                ) /* .filter(
+                    (fit) =>
+                        !complexFits.some((complexFit) =>
+                            compareFits(complexFit, fit, [
+                                "alteredDimensions",
+                                "stackCount",
+                                "unalteredDimensions",
+                            ])
+                        )
+                ) */
+            );
+        }
+        if (
+            itemLength !== itemWidth &&
+            (itemLength !== itemHeight || itemWidth !== itemHeight)
+        ) {
+            complexFits.push(
+                ...findFits(
+                    ["MODIFY_AND_STACK", "ROTATE_WIDTHWISE"],
+                    {
+                        length: itemLength,
+                        width: itemWidth,
+                        height: itemHeight,
+                    },
+                    boxList,
+                    itemPadding
+                ) /* .filter(
+                    (fit) =>
+                        !complexFits.some((complexFit) =>
+                            compareFits(complexFit, fit, [
+                                "alteredDimensions",
+                                "stackCount",
+                                "unalteredDimensions",
+                            ])
+                        )
+                ) */
+            );
+        }
 
         setFitResults({
             AS_IS: moveItemsToEnd(
-                [
-                    ...easyFits,
-                    ...easyFitsWithRotation1,
-                    ...easyFitsWithRotation2,
-                ].sort((a, b) => a.volume - b.volume),
+                easyFits.sort((a, b) => a.volume - b.volume),
                 (fit) => hasExcessiveVoidSpace(fit)
             ),
             STACKED: moveItemsToEnd(
-                [
-                    ...stackFits,
-                    ...stackFitsWithRotation1,
-                    ...stackFitsWithRotation2,
-                ].sort((a, b) => {
+                stackFits.sort((a, b) => {
                     if (a.stackCount === b.stackCount) {
                         return a.volume - b.volume;
                     }
@@ -190,19 +335,11 @@ const Home = () => {
                 (fit) => hasExcessiveVoidSpace(fit)
             ),
             MODIFIED: moveItemsToEnd(
-                [
-                    ...modifyFits,
-                    ...modifyFitsWithRotation1,
-                    ...modifyFitsWithRotation2,
-                ].sort((a, b) => a.volume - b.volume),
+                modifyFits.sort((a, b) => a.volume - b.volume),
                 (fit) => hasExcessiveVoidSpace(fit)
             ),
             MODIFIED_AND_STACKED: moveItemsToEnd(
-                [
-                    ...complexFits,
-                    ...complexFitsWithRotation1,
-                    ...complexFitsWithRotation2,
-                ].sort((a, b) => {
+                complexFits.sort((a, b) => {
                     if (a.stackCount === b.stackCount) {
                         return a.volume - b.volume;
                     }
