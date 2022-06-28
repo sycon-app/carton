@@ -14,7 +14,7 @@ import {
     Text,
     VStack,
 } from "@chakra-ui/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MdPrint } from "react-icons/md";
 
 import type { FitResult } from "lib/structs/FitResult";
@@ -132,6 +132,11 @@ const Home = () => {
         selectedFitResults[resultIndex]
     );
 
+    const lInputRef = useRef<HTMLInputElement>(null);
+    const wInputRef = useRef<HTMLInputElement>(null);
+    const hInputRef = useRef<HTMLInputElement>(null);
+    const pInputRef = useRef<HTMLInputElement>(null);
+
     return (
         <VStack spacing={4} w="full">
             <Flex
@@ -155,12 +160,21 @@ const Home = () => {
                             </Text>
                             <NumberInput defaultValue={1}>
                                 <NumberInputField
+                                    p={4}
                                     placeholder="Length"
                                     onChange={(e) =>
                                         setItemLength(
                                             Number(e.target.value) || 1
                                         )
                                     }
+                                    ref={lInputRef}
+                                    onClick={() => {
+                                        if (
+                                            (lInputRef.current?.value.length ??
+                                                0) > 0
+                                        )
+                                            lInputRef.current?.select();
+                                    }}
                                 />
                             </NumberInput>
                         </VStack>
@@ -181,6 +195,7 @@ const Home = () => {
                                 </FormLabel>
                                 <NumberInput defaultValue={1} id="width">
                                     <NumberInputField
+                                        p={4}
                                         placeholder="Width"
                                         color={
                                             itemWidth > itemLength
@@ -192,6 +207,14 @@ const Home = () => {
                                                 Number(e.target.value) || 1
                                             )
                                         }
+                                        ref={wInputRef}
+                                        onClick={() => {
+                                            if (
+                                                (wInputRef.current?.value
+                                                    .length ?? 0) > 0
+                                            )
+                                                wInputRef.current?.select();
+                                        }}
                                     />
                                 </NumberInput>
                             </FormControl>
@@ -211,12 +234,21 @@ const Home = () => {
                             </Text>
                             <NumberInput defaultValue={1}>
                                 <NumberInputField
+                                    p={4}
                                     placeholder="Height"
                                     onChange={(e) =>
                                         setItemHeight(
                                             Number(e.target.value) || 1
                                         )
                                     }
+                                    ref={hInputRef}
+                                    onClick={() => {
+                                        if (
+                                            (hInputRef.current?.value.length ??
+                                                0) > 0
+                                        )
+                                            hInputRef.current?.select();
+                                    }}
                                 />
                             </NumberInput>
                         </VStack>
@@ -232,10 +264,19 @@ const Home = () => {
                             </Text>
                             <NumberInput defaultValue={0}>
                                 <NumberInputField
+                                    p={4}
                                     placeholder="Padding"
                                     onChange={(e) =>
                                         setItemPadding(Number(e.target.value))
                                     }
+                                    ref={pInputRef}
+                                    onClick={() => {
+                                        if (
+                                            (pInputRef.current?.value.length ??
+                                                0) > 0
+                                        )
+                                            pInputRef.current?.select();
+                                    }}
                                 />
                             </NumberInput>
                         </VStack>
@@ -316,6 +357,7 @@ const Home = () => {
                                     )}
                                 </Select>
                                 <IconButton
+                                    w="6rem"
                                     aria-label="Previous"
                                     icon={<ChevronLeftIcon />}
                                     isDisabled={resultIndex - 1 < 0}
@@ -324,6 +366,7 @@ const Home = () => {
                                     }
                                 />
                                 <IconButton
+                                    w="6rem"
                                     aria-label="Next"
                                     icon={<ChevronRightIcon />}
                                     isDisabled={
@@ -335,6 +378,7 @@ const Home = () => {
                                     }
                                 />
                                 <IconButton
+                                    minW="2rem"
                                     colorScheme="blue"
                                     aria-label="Print instructions"
                                     icon={<Icon as={MdPrint} />}
