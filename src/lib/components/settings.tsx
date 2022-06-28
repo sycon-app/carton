@@ -271,8 +271,12 @@ export default function Settings() {
                             Add
                         </Button>
                         {!boxes && (
-                            <Text>
-                                First load detected. Reload the page use the
+                            <Text
+                                backgroundColor="yellow.100"
+                                color="yellow.800"
+                                p={4}
+                            >
+                                First load detected. Reload the page to use the
                                 settings panel. If this message is unexpected,
                                 please file a bug report.
                             </Text>
