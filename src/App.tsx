@@ -5,11 +5,11 @@ import Routings from "./lib/router/Routings";
 import { theme } from "./lib/styles/customTheme";
 
 const App = () => (
-  <ChakraProvider theme={theme}>
-    <Router>
-      <Routings />
-    </Router>
-  </ChakraProvider>
+    <ChakraProvider theme={theme}>
+        <Router>
+            <Routings />
+        </Router>
+    </ChakraProvider>
 );
 
 export default App;

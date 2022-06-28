@@ -1,444 +1,360 @@
-/* eslint-disable react/jsx-no-constructed-context-values */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-nested-ternary */
+import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
 import {
-  AddIcon,
-  QuestionOutlineIcon,
-  ExternalLinkIcon,
-  CheckIcon,
-} from "@chakra-ui/icons";
-import {
-  Box,
-  Button,
-  Flex,
-  FormControl,
-  FormLabel,
-  Heading,
-  Input,
-  useColorMode,
-  useToast,
-  VStack,
-  Text,
-  HStack,
-  Spacer,
-  Spinner,
-  Link,
-  Kbd,
-  useDisclosure,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  Textarea,
-  useClipboard,
+    Box,
+    Flex,
+    FormControl,
+    FormLabel,
+    HStack,
+    Icon,
+    IconButton,
+    NumberInput,
+    NumberInputField,
+    Select,
+    Spacer,
+    Text,
+    VStack,
 } from "@chakra-ui/react";
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { MdPrint } from "react-icons/md";
 
-import { ForceColorMode } from "../../components/ForceColorMode";
-import useFileHandler, {
-  downloadTextFile,
-  getTextFromFile,
-} from "../../util/hooks/useFileHandler";
-import useMailboxData from "../../util/hooks/useMailboxData";
-import { Mailbox } from "lib/structs/Mailbox";
+import type { FitResult } from "lib/structs/FitResult";
+import { boxDefaults } from "lib/util/boxDefaults";
+import { findFits } from "lib/util/findPotentialBoxes";
+import useInstructionsPrinting from "lib/util/hooks/useInstructionsPrinting";
 
-import BoxFilter from "./components/BoxFilter";
-import MetaSearch from "./components/MetaSearch";
-import {
-  WRTCDataShareButtonReceive,
-  WRTCDataShareButtonSend,
-} from "./components/WRTCDataShareButton";
+import Instructions from "./components/Instructions";
+import VisualAid from "./components/VisualAid";
 
-const openFile = (filename: string, text: string) => {
-  const printwindow = window.open("", "PRINT", "height=400,width=600");
-
-  if (!printwindow) return;
-
-  printwindow.document.write("<head></head><body><pre>");
-  printwindow.document.write(text);
-  printwindow.document.write("</pre></body></html>");
-  printwindow.document.close(); // necessary for IE >= 10
-  printwindow.focus(); // necessary for IE >= 10
-  printwindow.print();
-  printwindow.close();
-};
-
-const validationColor = (
-  isValidData: boolean | null,
-  colorMode: "light" | "dark",
-  defaultCallback?: (colorMode: "light" | "dark") => string
-) => {
-  if (isValidData === null) return defaultCallback?.(colorMode);
-
-  const suffix = colorMode === "light" ? "400" : "500";
-  const prefix = isValidData === true ? "green" : "red";
-
-  return `${prefix}.${suffix}`;
-};
-
-// eslint-disable-next-line sonarjs/cognitive-complexity
 const Home = () => {
-  const { centerNum } = useParams();
+    const [itemLength, setItemLength] = useState(1);
+    const [itemWidth, setItemWidth] = useState(1);
+    const [itemHeight, setItemHeight] = useState(1);
+    const [itemPadding, setItemPadding] = useState(0);
+    const [fitResults, setFitResults] = useState<{
+        AS_IS: FitResult[];
+        STACKED: FitResult[];
+        MODIFIED: FitResult[];
+        MODIFIED_AND_STACKED: FitResult[];
+    }>();
+    const [resultMethod, setResultMethod] = useState<
+        "AS_IS" | "STACKED" | "MODIFIED" | "MODIFIED_AND_STACKED"
+    >("AS_IS");
+    const [resultIndex, setResultIndex] = useState(0);
+    const selectedFitResults = useMemo(() => {
+        return fitResults?.[resultMethod] ?? [];
+    }, [fitResults, resultMethod]);
 
-  const toast = useToast();
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const { colorMode } = useColorMode();
-  const [fileName, setFileName] = useState("");
-  const {
-    mailboxes,
-    setMailboxes,
-    setRawMailboxDataStr,
-    isParsing,
-    isValidData,
-    report,
-  } = useMailboxData(centerNum);
-  const nonInactiveMailboxes = useMemo(
-    () =>
-      mailboxes.filter(
-        (mailbox) => mailbox.status === "ACTIVE" || mailbox.status === "PENDING"
-      ),
-    [mailboxes]
-  );
+    useEffect(() => {
+        if (resultMethod === "AS_IS") setResultIndex(0);
 
-  const [isReportLoading] = useState(false);
-  const [reportViewContent, setReportViewContent] = useState("");
-  const { hasCopied, onCopy } = useClipboard(report);
-  const { onChange, onDragOver, onDrop } = useFileHandler({
-    allowedFileTypes: ["application/json"],
-    badFileTypeCallback: () =>
-      toast({
-        status: "error",
-        title: "File error",
-        description: "File must be JSOn",
-      }),
-    fileSuccessCallbad: async (file) => {
-      setFileName(file.name);
+        setResultMethod("AS_IS");
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [itemLength, itemWidth, itemHeight]);
 
-      const result = await getTextFromFile(file);
+    useEffect(() => {
+        setResultIndex(0);
+    }, [resultMethod]);
 
-      setRawMailboxDataStr(result);
-    },
-  });
+    useEffect(() => {
+        if (itemWidth > itemLength) {
+            setFitResults(undefined);
 
-  useEffect(() => {
-    setReportViewContent(report);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+            return;
+        }
 
-  /* DEV
-  useEffect(() => {
-    console.log(mailboxes);
-  }, [mailboxes]);
-  */
+        const easyFits = findFits(
+            ["AS_IS"],
+            { length: itemLength, width: itemWidth, height: itemHeight },
+            boxDefaults,
+            itemPadding
+        );
+        const easyFitsWithRotation = findFits(
+            ["AS_IS", "ROTATE"],
+            { length: itemLength, width: itemWidth, height: itemHeight },
+            boxDefaults,
+            itemPadding
+        );
+        const stackFits = findFits(
+            ["STACK"],
+            { length: itemLength, width: itemWidth, height: itemHeight },
+            boxDefaults,
+            itemPadding
+        );
+        const stackFitsWithRotation = findFits(
+            ["STACK", "ROTATE"],
+            { length: itemLength, width: itemWidth, height: itemHeight },
+            boxDefaults,
+            itemPadding
+        );
+        const modifyFits = findFits(
+            ["MODIFY"],
+            { length: itemLength, width: itemWidth, height: itemHeight },
+            boxDefaults,
+            itemPadding
+        );
+        const modifyFitsWithRotation = findFits(
+            ["MODIFY", "ROTATE"],
+            { length: itemLength, width: itemWidth, height: itemHeight },
+            boxDefaults,
+            itemPadding
+        );
+        const complexFits = findFits(
+            ["MODIFY_AND_STACK"],
+            { length: itemLength, width: itemWidth, height: itemHeight },
+            boxDefaults,
+            itemPadding
+        );
+        const complexFitsWithRotation = findFits(
+            ["MODIFY_AND_STACK", "ROTATE"],
+            { length: itemLength, width: itemWidth, height: itemHeight },
+            boxDefaults,
+            itemPadding
+        );
 
-  return (
-    <>
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        onCloseComplete={() => setReportViewContent("")}
-        scrollBehavior="inside"
-        size="full"
-      >
-        <ModalOverlay />
-        <ModalContent height="full">
-          <ModalHeader>MBS Report</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody height="full">
-            {reportViewContent.length === 0 ? (
-              <Spinner />
-            ) : (
-              <Textarea
-                height="full"
-                resize="none"
-                isReadOnly
-                fontFamily="mono"
-                value={reportViewContent}
-              />
-            )}
-          </ModalBody>
+        setFitResults({
+            AS_IS: [...easyFits, ...easyFitsWithRotation].sort(
+                (a, b) => a.volume - b.volume
+            ),
+            STACKED: [...stackFits, ...stackFitsWithRotation].sort(
+                (a, b) => a.volume - b.volume
+            ),
+            MODIFIED: [...modifyFits, ...modifyFitsWithRotation].sort(
+                (a, b) => a.volume - b.volume
+            ),
+            MODIFIED_AND_STACKED: [
+                ...complexFits,
+                ...complexFitsWithRotation,
+            ].sort((a, b) => a.volume - b.volume),
+        });
+    }, [itemLength, itemWidth, itemHeight, itemPadding]);
 
-          <ModalFooter>
-            <Button colorScheme="blue" onClick={onClose}>
-              Close
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+    const printInstructions = useInstructionsPrinting(
+        selectedFitResults[resultIndex]
+    );
 
-      <Flex flexWrap="wrap">
-        <Box
-          flexGrow={2}
-          flexShrink={1}
-          m={2}
-          mx={[0, 2]}
-          p={4}
-          borderRadius="md"
-          backgroundColor={colorMode === "light" ? "gray.800" : "gray.100"}
-          color={colorMode === "light" ? "white" : "black"}
-        >
-          <HStack mb={4}>
-            <Heading as="h3" size="sm">
-              Upload mailbox data
-            </Heading>
-            <Spacer />
-            <Spinner hidden={!isParsing} />
-          </HStack>
-          <FormControl mb={4}>
-            <FormLabel
-              htmlFor="file-input"
-              w="full"
-              onDragOver={onDragOver}
-              onDrop={onDrop}
-            >
-              <Flex
-                direction="column"
-                align="center"
-                w="full"
-                borderRadius="md"
-                borderStyle="dotted"
-                borderWidth="thin"
-                borderColor={validationColor(isValidData, colorMode, (cm) =>
-                  cm === "light" ? "gray.200" : "gray.700"
-                )}
+    return (
+        <VStack spacing={4} w="full">
+            <Flex
                 p={4}
-                transition="0.1s"
-                cursor="pointer"
-                _hover={{
-                  backgroundColor:
-                    colorMode === "light" ? "whiteAlpha.100" : "blackAlpha.100",
-                }}
-                _active={{
-                  backgroundColor:
-                    colorMode === "light" ? "whiteAlpha.200" : "blackAlpha.200",
-                }}
-              >
-                <AddIcon
-                  mb={2}
-                  color={validationColor(isValidData, colorMode, (cm) =>
-                    cm === "light" ? "gray.200" : "gray.700"
-                  )}
-                />
-                {fileName ? (
-                  <Text
-                    fontSize="sm"
-                    color={validationColor(isValidData, colorMode, (cm) =>
-                      cm === "light" ? "gray.200" : "gray.700"
-                    )}
-                  >
-                    {fileName}
-                  </Text>
-                ) : isValidData !== null ? (
-                  <Text
-                    fontSize="sm"
-                    color={validationColor(isValidData, colorMode, (cm) =>
-                      cm === "light" ? "gray.200" : "gray.700"
-                    )}
-                  >
-                    [Pasted from clipboard]
-                  </Text>
-                ) : (
-                  <Text>Upload file</Text>
-                )}
-              </Flex>
-            </FormLabel>
-            <Input
-              display="none"
-              id="file-input"
-              type="file"
-              onChange={onChange}
-            />
-          </FormControl>
-          <HStack mb={4}>
-            <Text>or</Text>
-            <ForceColorMode darkMode={colorMode === "light"}>
-              <Button
-                size="xs"
-                variant="outline"
-                colorScheme="blue"
-                onClick={async () => {
-                  const result = await navigator.clipboard
-                    .readText()
-                    .catch(() => {});
-
-                  if (!result) return;
-
-                  setRawMailboxDataStr(result);
-                }}
-              >
-                Get data from clipboard
-              </Button>
-            </ForceColorMode>
-          </HStack>
-          <Text fontSize="xs" mb={1}>
-            We recognize your data is private. Nothing will ever be sent to our
-            servers.
-          </Text>
-          <Text fontSize="xs">Current data size: {mailboxes.length} items</Text>
-          <VStack mt={4} spacing={2} align="start">
-            {mailboxes.length !== 0 && (
-              <WRTCDataShareButtonSend mailboxes={mailboxes} />
-            )}
-            <WRTCDataShareButtonReceive setMailboxes={setMailboxes} />
-          </VStack>
-        </Box>
-        {mailboxes.length > 0 && (
-          <Box
-            flexGrow={1}
-            m={2}
-            mx={[0, 2]}
-            p={4}
-            borderRadius="md"
-            backgroundColor={colorMode === "light" ? "gray.800" : "gray.100"}
-            color={colorMode === "light" ? "white" : "black"}
-          >
-            <ForceColorMode darkMode={colorMode === "light"}>
-              <HStack mb={4}>
-                <Heading as="h3" size="sm">
-                  Actions
-                </Heading>
-                <Spacer />
-                <Spinner hidden={!isReportLoading} />
-              </HStack>
-              <VStack>
-                <Button
-                  colorScheme="blue"
-                  w="full"
-                  isDisabled={mailboxes.length < 1}
-                  onClick={onOpen}
-                >
-                  View report
-                </Button>
-                <Button
-                  colorScheme="blue"
-                  w="full"
-                  isDisabled={mailboxes.length < 1}
-                  onClick={() => {
-                    openFile(`mbs_report_${Date.now()}.txt`, report);
-                  }}
-                >
-                  Print report
-                </Button>
-                <Button
-                  colorScheme="blue"
-                  w="full"
-                  isDisabled={mailboxes.length < 1}
-                  onClick={() => {
-                    downloadTextFile(`mbs_report_${Date.now()}.txt`, report);
-                  }}
-                >
-                  Download report
-                </Button>
-                <Button
-                  colorScheme="blue"
-                  w="full"
-                  isDisabled={mailboxes.length < 1}
-                  onClick={onCopy}
-                >
-                  {hasCopied ? <CheckIcon /> : "Copy report to clipboard"}
-                </Button>
-              </VStack>
-            </ForceColorMode>
-          </Box>
-        )}
-        {mailboxes.length > 0 && (
-          <Box
-            flexGrow={1}
-            m={2}
-            mx={[0, 2]}
-            p={4}
-            borderRadius="md"
-            backgroundColor={colorMode === "light" ? "gray.800" : "gray.100"}
-            color={colorMode === "light" ? "white" : "black"}
-          >
-            <ForceColorMode darkMode={colorMode === "light"}>
-              <Heading as="h3" size="sm" mb={4}>
-                Tools
-              </Heading>
-            </ForceColorMode>
-            <VStack>
-              <BoxFilter
-                colorMode={colorMode}
-                mailboxes={nonInactiveMailboxes}
-              />
-              <MetaSearch
-                colorMode={colorMode}
-                mailboxes={nonInactiveMailboxes.map((mailbox) =>
-                  Mailbox.fromJSON(mailbox)
-                )}
-              />
-            </VStack>
-          </Box>
-        )}
-        <Box
-          flexBasis="100%"
-          m={2}
-          mx={[0, 2]}
-          p={4}
-          borderRadius="md"
-          borderWidth="thin"
-        >
-          <HStack>
-            <QuestionOutlineIcon mb={1} />
-            <Heading as="h4" size="sm">
-              How do I use this?
-            </Heading>
-          </HStack>
-          <Text>
-            Make sure you&apos;re signed into{" "}
-            <Link
-              href="https://manage.theupsstore.com"
-              isExternal
-              color="teal.500"
+                borderRadius="md"
+                backgroundColor="white"
+                wrap="wrap"
+                alignItems="center"
+                w="full"
             >
-              Center Management <ExternalLinkIcon />
-            </Link>
-            .
-            <br />
-            Once you are, click{" "}
-            <Link
-              href="https://manage.theupsstore.com/Mailbox/GetMailboxAgreementList"
-              isExternal
-              color="teal.500"
-            >
-              here <ExternalLinkIcon />
-            </Link>{" "}
-            and save the data by pressing{" "}
-            <span>
-              <Kbd>Ctrl</Kbd> + <Kbd>S</Kbd>
-            </span>{" "}
-            (or{" "}
-            <span>
-              <Kbd>Command</Kbd> + <Kbd>S</Kbd>
-            </span>{" "}
-            on MacOS). Once you have downloaded your data file, upload it here
-            using the file upload box above.
-            <br />
-            Alternatively, you can simply copy all the data on the page using{" "}
-            <span>
-              <Kbd>Ctrl</Kbd> + <Kbd>A</Kbd> then <Kbd>Ctrl</Kbd> + <Kbd>C</Kbd>
-            </span>{" "}
-            and then press <strong>Get data from clipboard</strong> in the box
-            above.
-            <br />
-            <br />
-            If you need to send mailbox data from one device to another, simply
-            press the appropirate buttons at the bottom of the{" "}
-            <strong>Upload mailbox data</strong> box. All data is sent via{" "}
-            <Link href="https://webrtc.org" isExternal color="teal.500">
-              WebRTC <ExternalLinkIcon />
-            </Link>
-            , meaning your data never touches our servers and gets sent directly
-            from one device to another.
-          </Text>
-        </Box>
-      </Flex>
-    </>
-  );
+                <VStack w="full">
+                    <HStack align="stretch">
+                        <VStack align="start">
+                            <Text
+                                fontWeight="bold"
+                                fontSize="xs"
+                                textTransform="uppercase"
+                                pl="10px"
+                            >
+                                Length
+                            </Text>
+                            <NumberInput defaultValue={1}>
+                                <NumberInputField
+                                    placeholder="Length"
+                                    onChange={(e) =>
+                                        setItemLength(
+                                            Number(e.target.value) || 1
+                                        )
+                                    }
+                                />
+                            </NumberInput>
+                        </VStack>
+                        <VStack>
+                            <Spacer />
+                            <Text pb={2}>x</Text>
+                        </VStack>
+                        <VStack align="start">
+                            <FormControl isInvalid={itemWidth > itemLength}>
+                                <FormLabel
+                                    fontWeight="bold"
+                                    fontSize="xs"
+                                    textTransform="uppercase"
+                                    pl="10px"
+                                    htmlFor="width"
+                                >
+                                    Width
+                                </FormLabel>
+                                <NumberInput defaultValue={1} id="width">
+                                    <NumberInputField
+                                        placeholder="Width"
+                                        color={
+                                            itemWidth > itemLength
+                                                ? "red.500"
+                                                : undefined
+                                        }
+                                        onChange={(e) =>
+                                            setItemWidth(
+                                                Number(e.target.value) || 1
+                                            )
+                                        }
+                                    />
+                                </NumberInput>
+                            </FormControl>
+                        </VStack>
+                        <VStack>
+                            <Spacer />
+                            <Text pb={2}>x</Text>
+                        </VStack>
+                        <VStack align="start">
+                            <Text
+                                fontWeight="bold"
+                                fontSize="xs"
+                                textTransform="uppercase"
+                                pl="10px"
+                            >
+                                Height
+                            </Text>
+                            <NumberInput defaultValue={1}>
+                                <NumberInputField
+                                    placeholder="Height"
+                                    onChange={(e) =>
+                                        setItemHeight(
+                                            Number(e.target.value) || 1
+                                        )
+                                    }
+                                />
+                            </NumberInput>
+                        </VStack>
+
+                        <VStack align="start" pl={4}>
+                            <Text
+                                fontWeight="bold"
+                                fontSize="xs"
+                                textTransform="uppercase"
+                                pl="10px"
+                            >
+                                Padding
+                            </Text>
+                            <NumberInput defaultValue={0}>
+                                <NumberInputField
+                                    placeholder="Padding"
+                                    onChange={(e) =>
+                                        setItemPadding(Number(e.target.value))
+                                    }
+                                />
+                            </NumberInput>
+                        </VStack>
+                    </HStack>
+                </VStack>
+            </Flex>
+            <Box display={["block", "flex"]} w="full">
+                <Box
+                    backgroundColor="gray.900"
+                    borderRadius="md"
+                    h="15rem"
+                    w={["full", "15rem"]}
+                >
+                    <VisualAid
+                        item={{
+                            length:
+                                selectedFitResults[resultIndex]?.item.length ??
+                                1,
+                            width:
+                                selectedFitResults[resultIndex]?.item.width ??
+                                1,
+                            height:
+                                selectedFitResults[resultIndex]?.item.height ??
+                                1,
+                        }}
+                        container={{
+                            length:
+                                selectedFitResults[resultIndex]
+                                    ?.alteredDimensions.length ?? 0,
+                            width:
+                                selectedFitResults[resultIndex]
+                                    ?.alteredDimensions.width ?? 0,
+                            height:
+                                selectedFitResults[resultIndex]
+                                    ?.alteredDimensions.height ?? 0,
+                        }}
+                        padding={itemPadding}
+                    />
+                </Box>
+                <Box
+                    ml={[0, 4]}
+                    mt={[4, 0]}
+                    p={4}
+                    borderRadius="md"
+                    backgroundColor="white"
+                    flexGrow={1}
+                    w="full"
+                >
+                    {fitResults && (
+                        <>
+                            <HStack mb={4}>
+                                <Select
+                                    onChange={(e) =>
+                                        setResultMethod(e.target.value as any)
+                                    }
+                                >
+                                    {fitResults.AS_IS.length > 0 && (
+                                        <option value="AS_IS">
+                                            Without modifications
+                                        </option>
+                                    )}
+                                    {fitResults.STACKED.length > 0 && (
+                                        <option value="STACKED">
+                                            With stacking
+                                        </option>
+                                    )}
+                                    {fitResults.MODIFIED.length > 0 && (
+                                        <option value="MODIFIED">
+                                            With adjustment
+                                        </option>
+                                    )}
+                                    {fitResults.MODIFIED_AND_STACKED.length >
+                                        0 && (
+                                        <option value="MODIFIED_AND_STACKED">
+                                            With both adjustment and stacking
+                                        </option>
+                                    )}
+                                </Select>
+                                <IconButton
+                                    aria-label="Previous"
+                                    icon={<ChevronLeftIcon />}
+                                    isDisabled={resultIndex - 1 < 0}
+                                    onClick={() =>
+                                        setResultIndex(resultIndex - 1)
+                                    }
+                                />
+                                <IconButton
+                                    aria-label="Next"
+                                    icon={<ChevronRightIcon />}
+                                    isDisabled={
+                                        selectedFitResults[resultIndex + 1] ===
+                                        undefined
+                                    }
+                                    onClick={() =>
+                                        setResultIndex(resultIndex + 1)
+                                    }
+                                />
+                                <IconButton
+                                    colorScheme="blue"
+                                    aria-label="Print instructions"
+                                    icon={<Icon as={MdPrint} />}
+                                    isDisabled={
+                                        selectedFitResults[resultIndex] ===
+                                        undefined
+                                    }
+                                    onClick={() => printInstructions()}
+                                />
+                            </HStack>
+                            {selectedFitResults[resultIndex] !== undefined && (
+                                <Instructions
+                                    fitResult={selectedFitResults[resultIndex]}
+                                />
+                            )}
+                        </>
+                    )}
+                </Box>
+            </Box>
+        </VStack>
+    );
 };
 
 export default Home;
