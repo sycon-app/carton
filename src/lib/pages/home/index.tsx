@@ -19,8 +19,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { MdPrint } from "react-icons/md";
 
 import type { FitResult } from "lib/structs/FitResult";
+import { moveItemsToEnd } from "lib/util/array";
 import { boxDefaults } from "lib/util/boxDefaults";
-import { findFits } from "lib/util/findPotentialBoxes";
+import { findFits, hasExcessiveVoidSpace } from "lib/util/findPotentialBoxes";
 import useInstructionsPrinting from "lib/util/hooks/useInstructionsPrinting";
 
 import Instructions from "./components/Instructions";
@@ -119,29 +120,38 @@ const Home = () => {
         );
 
         setFitResults({
-            AS_IS: [...easyFits, ...easyFitsWithRotation].sort(
-                (a, b) => a.volume - b.volume
+            AS_IS: moveItemsToEnd(
+                [...easyFits, ...easyFitsWithRotation].sort(
+                    (a, b) => a.volume - b.volume
+                ),
+                (fit) => hasExcessiveVoidSpace(fit)
             ),
-            STACKED: [...stackFits, ...stackFitsWithRotation].sort((a, b) => {
-                if (a.stackCount === b.stackCount) {
-                    return a.volume - b.volume;
-                }
+            STACKED: moveItemsToEnd(
+                [...stackFits, ...stackFitsWithRotation].sort((a, b) => {
+                    if (a.stackCount === b.stackCount) {
+                        return a.volume - b.volume;
+                    }
 
-                return a.stackCount - b.stackCount;
-            }),
-            MODIFIED: [...modifyFits, ...modifyFitsWithRotation].sort(
-                (a, b) => a.volume - b.volume
+                    return a.stackCount - b.stackCount;
+                }),
+                (fit) => hasExcessiveVoidSpace(fit)
             ),
-            MODIFIED_AND_STACKED: [
-                ...complexFits,
-                ...complexFitsWithRotation,
-            ].sort((a, b) => {
-                if (a.stackCount === b.stackCount) {
-                    return a.volume - b.volume;
-                }
+            MODIFIED: moveItemsToEnd(
+                [...modifyFits, ...modifyFitsWithRotation].sort(
+                    (a, b) => a.volume - b.volume
+                ),
+                (fit) => hasExcessiveVoidSpace(fit)
+            ),
+            MODIFIED_AND_STACKED: moveItemsToEnd(
+                [...complexFits, ...complexFitsWithRotation].sort((a, b) => {
+                    if (a.stackCount === b.stackCount) {
+                        return a.volume - b.volume;
+                    }
 
-                return a.stackCount - b.stackCount;
-            }),
+                    return a.stackCount - b.stackCount;
+                }),
+                (fit) => hasExcessiveVoidSpace(fit)
+            ),
         });
     }, [itemLength, itemWidth, itemHeight, itemPadding]);
 

@@ -1,5 +1,13 @@
 import { ArrowForwardIcon } from "@chakra-ui/icons";
-import { Box, HStack, List, ListIcon, ListItem, Text } from "@chakra-ui/react";
+import {
+    Badge,
+    Box,
+    HStack,
+    List,
+    ListIcon,
+    ListItem,
+    Text,
+} from "@chakra-ui/react";
 import { useMemo } from "react";
 import { AiOutlineRotateRight } from "react-icons/ai";
 import { BsViewStacked } from "react-icons/bs";
@@ -41,6 +49,11 @@ export default function Instructions({ fitResult }: { fitResult: FitResult }) {
                     {alteredDimensions.length}x{alteredDimensions.width}x
                     {alteredDimensions.height}
                 </Text>
+                {alteredDimensions.length * alteredDimensions.width -
+                    itemWithPadding.length * itemWithPadding.width >
+                    itemWithPadding.length * itemWithPadding.width && (
+                    <Badge colorScheme="orange">Large void space</Badge>
+                )}
             </HStack>
             <List>
                 {isItemRotated && (
