@@ -49,7 +49,7 @@ const Home = () => {
 
         setResultMethod("AS_IS");
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [itemLength, itemWidth, itemHeight]);
+    }, [itemLength, itemWidth, itemHeight, itemPadding]);
 
     useEffect(() => {
         setResultIndex(0);
