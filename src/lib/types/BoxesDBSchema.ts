@@ -1,10 +1,10 @@
 import type { DBSchema } from "idb";
 
-import type { BoxDimensions } from "../structs/BoxDimensions";
+import type { BoxData } from "lib/structs/BoxData";
 
 export interface BoxDBSchema extends DBSchema {
     boxes: {
-        value: BoxDimensions;
+        value: BoxData;
         key: string;
         indexes: { "by-number": number };
     };

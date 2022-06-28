@@ -1,4 +1,7 @@
-export const boxDefaults = [
+import type { BoxData } from "lib/structs/BoxData";
+import type { BoxDimensions } from "lib/structs/BoxDimensions";
+
+export const boxDimDefaults: BoxDimensions[] = [
     { length: 6, width: 6, height: 6 },
     { length: 8, width: 8, height: 8 },
     { length: 10, width: 10, height: 10 },
@@ -21,3 +24,11 @@ export const boxDefaults = [
     { length: 6, width: 6, height: 48 },
     { length: 15, width: 15, height: 48 },
 ];
+
+export const boxDefaults: BoxData[] = boxDimDefaults.map((dim) => ({
+    meta: {
+        preferNoAdjust: false,
+        preferNoStack: false,
+    },
+    dimensions: dim,
+}));

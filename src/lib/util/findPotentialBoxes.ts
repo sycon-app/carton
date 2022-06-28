@@ -1,5 +1,6 @@
 /* eslint-disable complexity */
 /* eslint-disable no-restricted-syntax */
+import type { BoxData } from "lib/structs/BoxData";
 import type { BoxDimensions } from "lib/structs/BoxDimensions";
 import type { FitResult } from "lib/structs/FitResult";
 
@@ -48,9 +49,8 @@ export function compareFits(
 export function findFits(
     methods: ("AS_IS" | "STACK" | "MODIFY" | "MODIFY_AND_STACK" | "ROTATE")[],
     dimensions: BoxDimensions,
-    availableBoxes: BoxDimensions[],
-    padding = 0,
-    validator: (potentialFit: FitResult) => boolean = () => true
+    availableBoxData: BoxData[],
+    padding = 0
 ) {
     const valid: FitResult[] = [];
 
@@ -67,9 +67,8 @@ export function findFits(
         height: adjustedItemDimensions.height + padding * 2,
     };
 
-    // eslint-disable-next-line guard-for-in
-    for (let i = 0; i < availableBoxes.length; i += 1) {
-        const box = availableBoxes[i];
+    for (let i = 0; i < availableBoxData.length; i += 1) {
+        const { meta, dimensions: box } = availableBoxData[i];
 
         const boxVolume = box.length * box.width * box.height;
 
@@ -86,10 +85,8 @@ export function findFits(
             boxFitsLengthAndWidthWhenModified && boxFitsHeight;
         const canFitModifiedAndStacked = boxFitsLengthAndWidthWhenModified;
 
-        let toPush: FitResult | undefined;
-
         if (methods.includes("AS_IS") && canFitEasy) {
-            toPush = {
+            valid.push({
                 item: adjustedItemDimensions,
                 itemWithPadding: dimensionsWithPadding,
                 isItemRotated: methods.includes("ROTATE"),
@@ -97,9 +94,14 @@ export function findFits(
                 alteredDimensions: box,
                 volume: boxVolume,
                 stackCount: 1,
-            };
-        } else if (methods.includes("STACK") && !canFitEasy && canFitStacked) {
-            toPush = {
+            });
+        } else if (
+            !meta.preferNoStack &&
+            methods.includes("STACK") &&
+            !canFitEasy &&
+            canFitStacked
+        ) {
+            valid.push({
                 item: adjustedItemDimensions,
                 itemWithPadding: dimensionsWithPadding,
                 isItemRotated: methods.includes("ROTATE"),
@@ -116,8 +118,9 @@ export function findFits(
                 stackCount: Math.ceil(
                     dimensionsWithPadding.height / box.height
                 ),
-            };
+            });
         } else if (
+            !meta.preferNoAdjust &&
             methods.includes("MODIFY") &&
             !canFitEasy &&
             !canFitStacked &&
@@ -130,7 +133,7 @@ export function findFits(
                 height: box.height,
             };
 
-            toPush = {
+            valid.push({
                 item: adjustedItemDimensions,
                 itemWithPadding: dimensionsWithPadding,
                 isItemRotated: methods.includes("ROTATE"),
@@ -138,8 +141,10 @@ export function findFits(
                 alteredDimensions: modifiedBoxDimensions,
                 volume: boxVolume,
                 stackCount: 1,
-            };
+            });
         } else if (
+            !meta.preferNoStack &&
+            !meta.preferNoAdjust &&
             methods.includes("MODIFY_AND_STACK") &&
             !canFitEasy &&
             !canFitStacked &&
@@ -155,7 +160,7 @@ export function findFits(
                     Math.ceil(dimensionsWithPadding.height / box.height),
             };
 
-            toPush = {
+            valid.push({
                 item: adjustedItemDimensions,
                 itemWithPadding: dimensionsWithPadding,
                 isItemRotated: methods.includes("ROTATE"),
@@ -167,11 +172,7 @@ export function findFits(
                 stackCount: Math.ceil(
                     dimensionsWithPadding.height / box.height
                 ),
-            };
-        }
-
-        if (toPush && validator(toPush)) {
-            valid.push(toPush);
+            });
         }
     }
 

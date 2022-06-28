@@ -1,13 +1,7 @@
-import {
-    Badge,
-    Box,
-    Flex,
-    Heading,
-    HStack,
-    Image,
-    Text,
-} from "@chakra-ui/react";
+import { Badge, Flex, Heading, HStack, Image, Text } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
+
+import Settings from "lib/components/settings";
 
 const Header = () => {
     return (
@@ -36,9 +30,10 @@ const Header = () => {
                 </HStack>
             </Link>
 
-            <Box marginLeft="auto">
+            <HStack marginLeft="auto">
                 <Badge colorScheme="yellow">Beta</Badge>
-            </Box>
+                <Settings />
+            </HStack>
         </Flex>
     );
 };

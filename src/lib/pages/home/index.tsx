@@ -13,21 +13,27 @@ import {
     Select,
     Spacer,
     Text,
+    useToast,
     VStack,
 } from "@chakra-ui/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MdPrint } from "react-icons/md";
 
+import type { BoxData } from "lib/structs/BoxData";
 import type { FitResult } from "lib/structs/FitResult";
 import { moveItemsToEnd } from "lib/util/array";
 import { boxDefaults } from "lib/util/boxDefaults";
 import { findFits, hasExcessiveVoidSpace } from "lib/util/findPotentialBoxes";
 import useInstructionsPrinting from "lib/util/hooks/useInstructionsPrinting";
+import usePersistentBoxData from "lib/util/hooks/usePersistentBoxData";
 
 import Instructions from "./components/Instructions";
 import VisualAid from "./components/VisualAid";
 
 const Home = () => {
+    const toast = useToast();
+
+    const { boxes } = usePersistentBoxData(true);
     const [itemLength, setItemLength] = useState(1);
     const [itemWidth, setItemWidth] = useState(1);
     const [itemHeight, setItemHeight] = useState(1);
@@ -64,6 +70,23 @@ const Home = () => {
     }, [resultMethod]);
 
     useEffect(() => {
+        let boxList: BoxData[];
+
+        if (!boxes || boxes.length < 1) {
+            if (!localStorage.getItem("initial_set")) {
+                boxList = boxDefaults;
+
+                toast({
+                    status: "info",
+                    title: "First load detected.",
+                    description:
+                        "Using default box list. If this message is unexpected, please file a bug report.",
+                });
+            } else {
+                return;
+            }
+        } else boxList = boxes;
+
         if (itemWidth > itemLength) {
             setFitResults(undefined);
 
@@ -73,49 +96,49 @@ const Home = () => {
         const easyFits = findFits(
             ["AS_IS"],
             { length: itemLength, width: itemWidth, height: itemHeight },
-            boxDefaults,
+            boxList,
             itemPadding
         );
         const easyFitsWithRotation = findFits(
             ["AS_IS", "ROTATE"],
             { length: itemLength, width: itemWidth, height: itemHeight },
-            boxDefaults,
+            boxList,
             itemPadding
         );
         const stackFits = findFits(
             ["STACK"],
             { length: itemLength, width: itemWidth, height: itemHeight },
-            boxDefaults,
+            boxList,
             itemPadding
         );
         const stackFitsWithRotation = findFits(
             ["STACK", "ROTATE"],
             { length: itemLength, width: itemWidth, height: itemHeight },
-            boxDefaults,
+            boxList,
             itemPadding
         );
         const modifyFits = findFits(
             ["MODIFY"],
             { length: itemLength, width: itemWidth, height: itemHeight },
-            boxDefaults,
+            boxList,
             itemPadding
         );
         const modifyFitsWithRotation = findFits(
             ["MODIFY", "ROTATE"],
             { length: itemLength, width: itemWidth, height: itemHeight },
-            boxDefaults,
+            boxList,
             itemPadding
         );
         const complexFits = findFits(
             ["MODIFY_AND_STACK"],
             { length: itemLength, width: itemWidth, height: itemHeight },
-            boxDefaults,
+            boxList,
             itemPadding
         );
         const complexFitsWithRotation = findFits(
             ["MODIFY_AND_STACK", "ROTATE"],
             { length: itemLength, width: itemWidth, height: itemHeight },
-            boxDefaults,
+            boxList,
             itemPadding
         );
 
@@ -153,7 +176,8 @@ const Home = () => {
                 (fit) => hasExcessiveVoidSpace(fit)
             ),
         });
-    }, [itemLength, itemWidth, itemHeight, itemPadding]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [itemLength, itemWidth, itemHeight, itemPadding, boxes]);
 
     const printInstructions = useInstructionsPrinting(
         selectedFitResults[resultIndex]
