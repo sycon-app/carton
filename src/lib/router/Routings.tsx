@@ -13,13 +13,13 @@ import { Routes, Route } from "react-router-dom";
 import { routes } from "./routes";
 
 const Routings = () => {
-  return (
-    <Routes>
-      {routes.map((routeProps) => (
-        <Route {...routeProps} key={routeProps.path} />
-      ))}
-    </Routes>
-  );
+    return (
+        <Routes>
+            {routes.map((routeProps) => (
+                <Route {...routeProps} key={routeProps.path} />
+            ))}
+        </Routes>
+    );
 };
 
 export default Routings;
