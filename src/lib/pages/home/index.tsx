@@ -99,8 +99,14 @@ const Home = () => {
             boxList,
             itemPadding
         );
-        const easyFitsWithRotation = findFits(
-            ["AS_IS", "ROTATE"],
+        const easyFitsWithRotation1 = findFits(
+            ["AS_IS", "ROTATE_LENGTHWISE"],
+            { length: itemLength, width: itemWidth, height: itemHeight },
+            boxList,
+            itemPadding
+        );
+        const easyFitsWithRotation2 = findFits(
+            ["AS_IS", "ROTATE_WIDTHWISE"],
             { length: itemLength, width: itemWidth, height: itemHeight },
             boxList,
             itemPadding
@@ -111,8 +117,14 @@ const Home = () => {
             boxList,
             itemPadding
         );
-        const stackFitsWithRotation = findFits(
-            ["STACK", "ROTATE"],
+        const stackFitsWithRotation1 = findFits(
+            ["STACK", "ROTATE_LENGTHWISE"],
+            { length: itemLength, width: itemWidth, height: itemHeight },
+            boxList,
+            itemPadding
+        );
+        const stackFitsWithRotation2 = findFits(
+            ["STACK", "ROTATE_WIDTHWISE"],
             { length: itemLength, width: itemWidth, height: itemHeight },
             boxList,
             itemPadding
@@ -123,8 +135,14 @@ const Home = () => {
             boxList,
             itemPadding
         );
-        const modifyFitsWithRotation = findFits(
-            ["MODIFY", "ROTATE"],
+        const modifyFitsWithRotation1 = findFits(
+            ["MODIFY", "ROTATE_LENGTHWISE"],
+            { length: itemLength, width: itemWidth, height: itemHeight },
+            boxList,
+            itemPadding
+        );
+        const modifyFitsWithRotation2 = findFits(
+            ["MODIFY", "ROTATE_WIDTHWISE"],
             { length: itemLength, width: itemWidth, height: itemHeight },
             boxList,
             itemPadding
@@ -135,8 +153,14 @@ const Home = () => {
             boxList,
             itemPadding
         );
-        const complexFitsWithRotation = findFits(
-            ["MODIFY_AND_STACK", "ROTATE"],
+        const complexFitsWithRotation1 = findFits(
+            ["MODIFY_AND_STACK", "ROTATE_LENGTHWISE"],
+            { length: itemLength, width: itemWidth, height: itemHeight },
+            boxList,
+            itemPadding
+        );
+        const complexFitsWithRotation2 = findFits(
+            ["MODIFY_AND_STACK", "ROTATE_WIDTHWISE"],
             { length: itemLength, width: itemWidth, height: itemHeight },
             boxList,
             itemPadding
@@ -144,13 +168,19 @@ const Home = () => {
 
         setFitResults({
             AS_IS: moveItemsToEnd(
-                [...easyFits, ...easyFitsWithRotation].sort(
-                    (a, b) => a.volume - b.volume
-                ),
+                [
+                    ...easyFits,
+                    ...easyFitsWithRotation1,
+                    ...easyFitsWithRotation2,
+                ].sort((a, b) => a.volume - b.volume),
                 (fit) => hasExcessiveVoidSpace(fit)
             ),
             STACKED: moveItemsToEnd(
-                [...stackFits, ...stackFitsWithRotation].sort((a, b) => {
+                [
+                    ...stackFits,
+                    ...stackFitsWithRotation1,
+                    ...stackFitsWithRotation2,
+                ].sort((a, b) => {
                     if (a.stackCount === b.stackCount) {
                         return a.volume - b.volume;
                     }
@@ -160,13 +190,19 @@ const Home = () => {
                 (fit) => hasExcessiveVoidSpace(fit)
             ),
             MODIFIED: moveItemsToEnd(
-                [...modifyFits, ...modifyFitsWithRotation].sort(
-                    (a, b) => a.volume - b.volume
-                ),
+                [
+                    ...modifyFits,
+                    ...modifyFitsWithRotation1,
+                    ...modifyFitsWithRotation2,
+                ].sort((a, b) => a.volume - b.volume),
                 (fit) => hasExcessiveVoidSpace(fit)
             ),
             MODIFIED_AND_STACKED: moveItemsToEnd(
-                [...complexFits, ...complexFitsWithRotation].sort((a, b) => {
+                [
+                    ...complexFits,
+                    ...complexFitsWithRotation1,
+                    ...complexFitsWithRotation2,
+                ].sort((a, b) => {
                     if (a.stackCount === b.stackCount) {
                         return a.volume - b.volume;
                     }

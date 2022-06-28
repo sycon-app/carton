@@ -4,10 +4,16 @@ import type { BoxData } from "lib/structs/BoxData";
 import type { BoxDimensions } from "lib/structs/BoxDimensions";
 import type { FitResult } from "lib/structs/FitResult";
 
-function rotateDimensions(dimensions: BoxDimensions): BoxDimensions {
-    const rotatedLength = dimensions.height;
-    const rotatedWidth = dimensions.width;
-    const rotatedHeight = dimensions.length;
+function rotateDimensions(
+    dimensions: BoxDimensions,
+    method: "LENGTHWISE" | "WIDTHWISE"
+): BoxDimensions {
+    const rotatedLength =
+        method === "LENGTHWISE" ? dimensions.height : dimensions.length;
+    const rotatedWidth =
+        method === "WIDTHWISE" ? dimensions.height : dimensions.width;
+    const rotatedHeight =
+        method === "LENGTHWISE" ? dimensions.length : dimensions.width;
 
     return {
         length: rotatedLength >= rotatedWidth ? rotatedLength : rotatedWidth,
@@ -36,7 +42,19 @@ export function compareFits(
     let isSame = true;
 
     keys.forEach((key) => {
-        if (fit1[key] !== fit2[key]) {
+        if (typeof fit1[key] === "object" && typeof fit2[key] === "object") {
+            // BoxDimensions
+            if (
+                (fit1[key] as BoxDimensions).length !==
+                    (fit2[key] as BoxDimensions).length ||
+                (fit1[key] as BoxDimensions).width !==
+                    (fit2[key] as BoxDimensions).width ||
+                (fit1[key] as BoxDimensions).height !==
+                    (fit2[key] as BoxDimensions).height
+            ) {
+                isSame = false;
+            }
+        } else if (fit1[key] !== fit2[key]) {
             isSame = false;
         }
     });
@@ -47,7 +65,14 @@ export function compareFits(
 // Assume length is always greater or equal to width
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function findFits(
-    methods: ("AS_IS" | "STACK" | "MODIFY" | "MODIFY_AND_STACK" | "ROTATE")[],
+    methods: (
+        | "AS_IS"
+        | "STACK"
+        | "MODIFY"
+        | "MODIFY_AND_STACK"
+        | "ROTATE_LENGTHWISE"
+        | "ROTATE_WIDTHWISE"
+    )[],
     dimensions: BoxDimensions,
     availableBoxData: BoxData[],
     padding = 0
@@ -55,8 +80,10 @@ export function findFits(
     const valid: FitResult[] = [];
 
     let adjustedItemDimensions: BoxDimensions;
-    if (methods.includes("ROTATE")) {
-        adjustedItemDimensions = rotateDimensions(dimensions);
+    if (methods.includes("ROTATE_LENGTHWISE")) {
+        adjustedItemDimensions = rotateDimensions(dimensions, "LENGTHWISE");
+    } else if (methods.includes("ROTATE_WIDTHWISE")) {
+        adjustedItemDimensions = rotateDimensions(dimensions, "WIDTHWISE");
     } else {
         adjustedItemDimensions = dimensions;
     }
@@ -89,7 +116,9 @@ export function findFits(
             valid.push({
                 item: adjustedItemDimensions,
                 itemWithPadding: dimensionsWithPadding,
-                isItemRotated: methods.includes("ROTATE"),
+                isItemRotated:
+                    methods.includes("ROTATE_LENGTHWISE") ||
+                    methods.includes("ROTATE_WIDTHWISE"),
                 unalteredDimensions: box,
                 alteredDimensions: box,
                 volume: boxVolume,
@@ -104,7 +133,9 @@ export function findFits(
             valid.push({
                 item: adjustedItemDimensions,
                 itemWithPadding: dimensionsWithPadding,
-                isItemRotated: methods.includes("ROTATE"),
+                isItemRotated:
+                    methods.includes("ROTATE_LENGTHWISE") ||
+                    methods.includes("ROTATE_WIDTHWISE"),
                 unalteredDimensions: box,
                 alteredDimensions: {
                     ...box,
@@ -136,7 +167,9 @@ export function findFits(
             valid.push({
                 item: adjustedItemDimensions,
                 itemWithPadding: dimensionsWithPadding,
-                isItemRotated: methods.includes("ROTATE"),
+                isItemRotated:
+                    methods.includes("ROTATE_LENGTHWISE") ||
+                    methods.includes("ROTATE_WIDTHWISE"),
                 unalteredDimensions: box,
                 alteredDimensions: modifiedBoxDimensions,
                 volume: boxVolume,
@@ -163,7 +196,9 @@ export function findFits(
             valid.push({
                 item: adjustedItemDimensions,
                 itemWithPadding: dimensionsWithPadding,
-                isItemRotated: methods.includes("ROTATE"),
+                isItemRotated:
+                    methods.includes("ROTATE_LENGTHWISE") ||
+                    methods.includes("ROTATE_WIDTHWISE"),
                 unalteredDimensions: box,
                 alteredDimensions: modifiedBoxDimensions,
                 volume:
