@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-identical-functions */
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
 import {
     Box,
@@ -121,16 +122,26 @@ const Home = () => {
             AS_IS: [...easyFits, ...easyFitsWithRotation].sort(
                 (a, b) => a.volume - b.volume
             ),
-            STACKED: [...stackFits, ...stackFitsWithRotation].sort(
-                (a, b) => a.volume - b.volume
-            ),
+            STACKED: [...stackFits, ...stackFitsWithRotation].sort((a, b) => {
+                if (a.stackCount === b.stackCount) {
+                    return a.volume - b.volume;
+                }
+
+                return a.stackCount - b.stackCount;
+            }),
             MODIFIED: [...modifyFits, ...modifyFitsWithRotation].sort(
                 (a, b) => a.volume - b.volume
             ),
             MODIFIED_AND_STACKED: [
                 ...complexFits,
                 ...complexFitsWithRotation,
-            ].sort((a, b) => a.volume - b.volume),
+            ].sort((a, b) => {
+                if (a.stackCount === b.stackCount) {
+                    return a.volume - b.volume;
+                }
+
+                return a.stackCount - b.stackCount;
+            }),
         });
     }, [itemLength, itemWidth, itemHeight, itemPadding]);
 
