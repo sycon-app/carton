@@ -11,7 +11,7 @@ const Footer = () => {
         >
             <Text fontSize="xs" color="white">
                 {new Date().getFullYear()} -{" "}
-                <Link href="https://sycon.app" isExternal>
+                <Link href="https://jdeurt.xyz" isExternal>
                     sycon.app
                 </Link>
             </Text>
