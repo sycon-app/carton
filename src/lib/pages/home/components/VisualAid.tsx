@@ -27,6 +27,7 @@ function Line({
     );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function Grid({
     size,
     divisions,
