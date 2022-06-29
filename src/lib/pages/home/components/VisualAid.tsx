@@ -1,7 +1,78 @@
 import { Canvas } from "@react-three/fiber";
-import { useMemo } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
+import type { BufferGeometry } from "three";
+import { Vector3 } from "three";
 
 import type { BoxDimensions } from "lib/structs/BoxDimensions";
+
+function Line({
+    from,
+    to,
+    color,
+}: {
+    from: [number, number, number];
+    to: [number, number, number];
+    color?: number;
+}) {
+    const ref = useRef<BufferGeometry>(null);
+    useLayoutEffect(() => {
+        ref.current?.setFromPoints([new Vector3(...from), new Vector3(...to)]);
+    }, [from, to]);
+
+    return (
+        <line>
+            <bufferGeometry attach="geometry" ref={ref} />
+            <lineBasicMaterial attach="material" color={color ?? "gray"} />
+        </line>
+    );
+}
+
+function Grid({
+    size,
+    divisions,
+    position,
+    rotation,
+    color,
+}: {
+    size: number;
+    divisions: [number, number];
+    position: [number, number, number];
+    rotation: [number, number, number];
+    color: number;
+}) {
+    const positionMatrix = useMemo(() => {
+        const matrix: [number, number, number][][] = [];
+
+        // outlines
+        matrix.push([
+            [0, 0, 0],
+            [size, 0, 0],
+        ]);
+        matrix.push([
+            [0, 0, 0],
+            [0, 0, size],
+        ]);
+        matrix.push([
+            [0, 0, size],
+            [size, 0, size],
+        ]);
+        matrix.push([
+            [size, 0, 0],
+            [size, 0, size],
+        ]);
+
+        return matrix;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [size, divisions]);
+
+    return (
+        <group position={position} rotation={rotation}>
+            {positionMatrix.map((pairs) => (
+                <Line from={pairs[0]} to={pairs[1]} color={color} />
+            ))}
+        </group>
+    );
+}
 
 function Cube({
     length,
@@ -10,6 +81,7 @@ function Cube({
     color,
     opacity,
     wireframe,
+    noLines,
 }: {
     length: number;
     width: number;
@@ -17,16 +89,72 @@ function Cube({
     color: string;
     opacity?: number;
     wireframe?: boolean;
+    noLines?: boolean;
 }) {
     return (
         <>
-            <boxGeometry args={[length, height, width]} />
-            <meshToonMaterial
-                color={color}
-                opacity={opacity ?? 1}
-                transparent={opacity !== undefined}
-                wireframe={wireframe}
-            />
+            <mesh scale={2} position={[0, 0, 0]}>
+                <boxGeometry args={[length, height, width]} />
+                <meshToonMaterial
+                    color={color}
+                    opacity={opacity ?? 1}
+                    transparent={opacity !== undefined}
+                    wireframe={wireframe}
+                />
+            </mesh>
+            {!noLines && (
+                <group>
+                    <Line
+                        from={[length, -1 * height, -1 * width]}
+                        to={[length, -1 * height, width]}
+                    />
+                    <Line
+                        from={[-1 * length, -1 * height, -1 * width]}
+                        to={[length, -1 * height, -1 * width]}
+                    />
+                    <Line
+                        from={[-1 * length, -1 * height, -1 * width]}
+                        to={[-1 * length, -1 * height, width]}
+                    />
+                    <Line
+                        from={[-1 * length, -1 * height, width]}
+                        to={[length, -1 * height, width]}
+                    />
+                    <Line
+                        from={[length, height, -1 * width]}
+                        to={[length, height, width]}
+                    />
+                    <Line
+                        from={[-1 * length, height, -1 * width]}
+                        to={[length, height, -1 * width]}
+                    />
+                    <Line
+                        from={[-1 * length, height, -1 * width]}
+                        to={[-1 * length, height, width]}
+                    />
+                    <Line
+                        from={[-1 * length, height, width]}
+                        to={[length, height, width]}
+                    />
+
+                    <Line
+                        from={[length, -1 * height, -1 * width]}
+                        to={[length, height, -1 * width]}
+                    />
+                    <Line
+                        from={[-1 * length, -1 * height, width]}
+                        to={[-1 * length, height, width]}
+                    />
+                    <Line
+                        from={[length, -1 * height, width]}
+                        to={[length, height, width]}
+                    />
+                    <Line
+                        from={[-1 * length, -1 * height, -1 * width]}
+                        to={[-1 * length, height, -1 * width]}
+                    />
+                </group>
+            )}
         </>
     );
 }
@@ -135,44 +263,37 @@ export default function VisualAid({
             <ambientLight intensity={0.5} />
             <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
             <pointLight position={[-10, -10, -10]} />
-            <mesh scale={2} position={[0, 0, 0]}>
-                <Cube
-                    length={normalizedItemDimensions.container.length + 0.001}
-                    width={normalizedItemDimensions.container.width + 0.001}
-                    height={normalizedItemDimensions.container.height + 0.001}
-                    color="red"
-                    opacity={0.45}
-                />
-            </mesh>
-            <mesh scale={2} position={[0, 0, 0]}>
-                <Cube
-                    length={
-                        padding
-                            ? normalizedItemDimensions.itemWithPadding.length
-                            : 0
-                    }
-                    width={
-                        padding
-                            ? normalizedItemDimensions.itemWithPadding.width
-                            : 0
-                    }
-                    height={
-                        padding
-                            ? normalizedItemDimensions.itemWithPadding.height
-                            : 0
-                    }
-                    color="blue"
-                    wireframe
-                />
-            </mesh>
-            <mesh scale={2} position={[0, 0, 0]}>
-                <Cube
-                    length={normalizedItemDimensions.item.length}
-                    width={normalizedItemDimensions.item.width}
-                    height={normalizedItemDimensions.item.height}
-                    color="white"
-                />
-            </mesh>
+            <Cube
+                length={normalizedItemDimensions.container.length + 0.001}
+                width={normalizedItemDimensions.container.width + 0.001}
+                height={normalizedItemDimensions.container.height + 0.001}
+                color="red"
+                opacity={0.45}
+            />
+            <Cube
+                length={
+                    padding
+                        ? normalizedItemDimensions.itemWithPadding.length
+                        : 0
+                }
+                width={
+                    padding ? normalizedItemDimensions.itemWithPadding.width : 0
+                }
+                height={
+                    padding
+                        ? normalizedItemDimensions.itemWithPadding.height
+                        : 0
+                }
+                color="blue"
+                wireframe
+                noLines
+            />
+            <Cube
+                length={normalizedItemDimensions.item.length}
+                width={normalizedItemDimensions.item.width}
+                height={normalizedItemDimensions.item.height}
+                color="white"
+            />
             <gridHelper
                 args={[4, (container?.length ?? 2) / 2, 0x2d3748, 0x2d3748]}
                 position={[
