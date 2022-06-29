@@ -553,6 +553,7 @@ const Home = () => {
                         <>
                             <HStack mb={4}>
                                 <Select
+                                    value={resultMethod}
                                     onChange={(e) =>
                                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                         setResultMethod(e.target.value as any)
