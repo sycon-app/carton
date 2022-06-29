@@ -124,15 +124,18 @@ export default function VisualAid({
     ]);
 
     return (
-        <Canvas camera={{ fov: 60, near: 0.1, far: 1000, position: [0, 0, 3] }}>
+        <Canvas
+            camera={{
+                fov: 60,
+                near: 0.1,
+                far: 1000,
+                position: [-1.7, 1.8, 2.5],
+            }}
+        >
             <ambientLight intensity={0.5} />
             <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
             <pointLight position={[-10, -10, -10]} />
-            <mesh
-                rotation={[Math.PI * 0.2, Math.PI * 0.25, 0]}
-                scale={1.8}
-                position={[0, 0.2, 0]}
-            >
+            <mesh scale={2} position={[0, 0, 0]}>
                 <Cube
                     length={normalizedItemDimensions.container.length + 0.001}
                     width={normalizedItemDimensions.container.width + 0.001}
@@ -141,11 +144,7 @@ export default function VisualAid({
                     opacity={0.45}
                 />
             </mesh>
-            <mesh
-                rotation={[Math.PI * 0.2, Math.PI * 0.25, 0]}
-                scale={1.8}
-                position={[0, 0.2, 0]}
-            >
+            <mesh scale={2} position={[0, 0, 0]}>
                 <Cube
                     length={
                         padding
@@ -166,11 +165,7 @@ export default function VisualAid({
                     wireframe
                 />
             </mesh>
-            <mesh
-                rotation={[Math.PI * 0.2, Math.PI * 0.25, 0]}
-                scale={1.8}
-                position={[0, 0.2, 0]}
-            >
+            <mesh scale={2} position={[0, 0, 0]}>
                 <Cube
                     length={normalizedItemDimensions.item.length}
                     width={normalizedItemDimensions.item.width}
@@ -178,6 +173,32 @@ export default function VisualAid({
                     color="white"
                 />
             </mesh>
+            <gridHelper
+                args={[4, (container?.length ?? 2) / 2, 0x2d3748, 0x2d3748]}
+                position={[
+                    0,
+                    -1 * normalizedItemDimensions.container.height + 0.001,
+                    0,
+                ]}
+            />
+            <gridHelper
+                args={[4, (container?.length ?? 2) / 2, 0x2c5282, 0x2c5282]}
+                position={[
+                    2,
+                    2 - (normalizedItemDimensions.container.height + 0.001),
+                    0,
+                ]}
+                rotation={[Math.PI * 0.5, 0, Math.PI * 0.5]}
+            />
+            <gridHelper
+                args={[4, (container?.length ?? 2) / 2, 0x9b2c2c, 0x9b2c2c]}
+                position={[
+                    0,
+                    2 - (normalizedItemDimensions.container.height + 0.001),
+                    -2,
+                ]}
+                rotation={[Math.PI * 0.5, 0, Math.PI]}
+            />
         </Canvas>
     );
 }
