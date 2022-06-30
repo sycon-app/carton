@@ -2,7 +2,7 @@
 /* eslint-disable no-restricted-syntax */
 import type { BoxData } from "lib/structs/BoxData";
 import type { BoxDimensions } from "lib/structs/BoxDimensions";
-import type { FitResult } from "lib/structs/FitResult";
+import type { FitResult_Legacy } from "lib/structs/FitResultLegacy";
 
 function rotateDimensions(
     dimensions: BoxDimensions,
@@ -22,7 +22,7 @@ function rotateDimensions(
     };
 }
 
-export function hasExcessiveVoidSpace(fit: FitResult, factor = 1) {
+export function hasExcessiveVoidSpace(fit: FitResult_Legacy, factor = 1) {
     return (
         fit.alteredDimensions.length * fit.alteredDimensions.width -
             fit.itemWithPadding.length * fit.itemWithPadding.width >
@@ -31,12 +31,12 @@ export function hasExcessiveVoidSpace(fit: FitResult, factor = 1) {
 }
 
 export function compareFits(
-    fit1: FitResult,
-    fit2: FitResult,
-    includeKeys: (keyof FitResult)[]
+    fit1: FitResult_Legacy,
+    fit2: FitResult_Legacy,
+    includeKeys: (keyof FitResult_Legacy)[]
 ) {
-    const keys = (Object.keys(fit1) as (keyof FitResult)[]).filter((key) =>
-        includeKeys.includes(key)
+    const keys = (Object.keys(fit1) as (keyof FitResult_Legacy)[]).filter(
+        (key) => includeKeys.includes(key)
     );
 
     let isSame = true;
@@ -77,7 +77,7 @@ export function findFits(
     availableBoxData: BoxData[],
     padding = 0
 ) {
-    const valid: FitResult[] = [];
+    const valid: FitResult_Legacy[] = [];
 
     let adjustedItemDimensions: BoxDimensions;
     if (methods.includes("ROTATE_LENGTHWISE")) {

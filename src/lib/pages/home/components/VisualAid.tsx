@@ -9,10 +9,12 @@ function Line({
     from,
     to,
     color,
+    dashed,
 }: {
     from: [number, number, number];
     to: [number, number, number];
     color?: number;
+    dashed?: boolean;
 }) {
     const ref = useRef<BufferGeometry>(null);
     useLayoutEffect(() => {
@@ -22,55 +24,67 @@ function Line({
     return (
         <line>
             <bufferGeometry attach="geometry" ref={ref} />
-            <lineBasicMaterial attach="material" color={color ?? "gray"} />
+            {dashed ? (
+                <lineDashedMaterial
+                    attach="material"
+                    color={color ?? "gray"}
+                    dashSize={1}
+                    gapSize={1}
+                />
+            ) : (
+                <lineBasicMaterial attach="material" color={color ?? "gray"} />
+            )}
         </line>
     );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function Grid({
-    size,
-    divisions,
-    position,
-    rotation,
+function CutDownGuide({
+    length,
+    width,
+    height,
     color,
+    cutDownAmount,
 }: {
-    size: number;
-    divisions: [number, number];
-    position: [number, number, number];
-    rotation: [number, number, number];
+    length: number;
+    width: number;
+    height: number;
     color: number;
+    cutDownAmount?: number;
 }) {
-    const positionMatrix = useMemo(() => {
-        const matrix: [number, number, number][][] = [];
-
-        // outlines
-        matrix.push([
-            [0, 0, 0],
-            [size, 0, 0],
-        ]);
-        matrix.push([
-            [0, 0, 0],
-            [0, 0, size],
-        ]);
-        matrix.push([
-            [0, 0, size],
-            [size, 0, size],
-        ]);
-        matrix.push([
-            [size, 0, 0],
-            [size, 0, size],
-        ]);
-
-        return matrix;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [size, divisions]);
-
     return (
-        <group position={position} rotation={rotation}>
-            {positionMatrix.map((pairs) => (
-                <Line from={pairs[0]} to={pairs[1]} color={color} />
-            ))}
+        <group>
+            <Line
+                from={[length, height - 2 * (cutDownAmount ?? 0), -1 * width]}
+                to={[length, height - 2 * (cutDownAmount ?? 0), width]}
+                color={color}
+                dashed
+            />
+            <Line
+                from={[
+                    -1 * length,
+                    height - 2 * (cutDownAmount ?? 0),
+                    -1 * width,
+                ]}
+                to={[length, height - 2 * (cutDownAmount ?? 0), -1 * width]}
+                color={color}
+                dashed
+            />
+            <Line
+                from={[
+                    -1 * length,
+                    height - 2 * (cutDownAmount ?? 0),
+                    -1 * width,
+                ]}
+                to={[-1 * length, height - 2 * (cutDownAmount ?? 0), width]}
+                color={color}
+                dashed
+            />
+            <Line
+                from={[-1 * length, height - 2 * (cutDownAmount ?? 0), width]}
+                to={[length, height - 2 * (cutDownAmount ?? 0), width]}
+                color={color}
+                dashed
+            />
         </group>
     );
 }
@@ -83,6 +97,8 @@ function Cube({
     opacity,
     wireframe,
     noLines,
+    cutDownAmount,
+    position,
 }: {
     length: number;
     width: number;
@@ -91,10 +107,12 @@ function Cube({
     opacity?: number;
     wireframe?: boolean;
     noLines?: boolean;
+    cutDownAmount?: number;
+    position?: [number, number, number];
 }) {
     return (
         <>
-            <mesh scale={2} position={[0, 0, 0]}>
+            <mesh scale={2} position={position ?? [0, 0, 0]}>
                 <boxGeometry args={[length, height, width]} />
                 <meshToonMaterial
                     color={color}
@@ -103,8 +121,17 @@ function Cube({
                     wireframe={wireframe}
                 />
             </mesh>
+            {cutDownAmount && (
+                <CutDownGuide
+                    length={length}
+                    width={width}
+                    height={height}
+                    cutDownAmount={cutDownAmount}
+                    color={0xc05621}
+                />
+            )}
             {!noLines && (
-                <group>
+                <group position={position ?? [0, 0, 0]}>
                     <Line
                         from={[length, -1 * height, -1 * width]}
                         to={[length, -1 * height, width]}
@@ -164,15 +191,18 @@ export default function VisualAid({
     item,
     container,
     padding,
+    cutDownAmount,
 }: {
     item?: Partial<BoxDimensions>;
     container?: Partial<BoxDimensions>;
     padding: number;
+    cutDownAmount?: number;
 }) {
     const getNormalized: () => {
         item: BoxDimensions;
         itemWithPadding: BoxDimensions;
         container: BoxDimensions;
+        cutDownAmount: number;
         // eslint-disable-next-line sonarjs/cognitive-complexity
     } = () => {
         const itemDims: BoxDimensions = {
@@ -208,6 +238,7 @@ export default function VisualAid({
                     width: 0,
                     height: 0,
                 },
+                cutDownAmount: 0,
             };
         }
 
@@ -243,6 +274,7 @@ export default function VisualAid({
                 width: containerDims.width / largestDim,
                 height: containerDims.height / largestDim,
             },
+            cutDownAmount: (cutDownAmount ?? 0) / largestDim,
         };
     };
 
@@ -250,6 +282,7 @@ export default function VisualAid({
         item,
         container,
         padding,
+        cutDownAmount,
     ]);
 
     return (
@@ -270,6 +303,8 @@ export default function VisualAid({
                 height={normalizedItemDimensions.container.height + 0.001}
                 color="red"
                 opacity={0.45}
+                // TODO
+                // cutDownAmount={normalizedItemDimensions.cutDownAmount}
             />
             <Cube
                 length={
@@ -285,6 +320,12 @@ export default function VisualAid({
                         ? normalizedItemDimensions.itemWithPadding.height
                         : 0
                 }
+                /* position={[
+                    0,
+                    (-2 * normalizedItemDimensions.container.height) / 2 +
+                        normalizedItemDimensions.itemWithPadding.height,
+                    0,
+                ]} */
                 color="blue"
                 wireframe
                 noLines
@@ -293,6 +334,13 @@ export default function VisualAid({
                 length={normalizedItemDimensions.item.length}
                 width={normalizedItemDimensions.item.width}
                 height={normalizedItemDimensions.item.height}
+                /* position={[
+                    0,
+                    (-2 * normalizedItemDimensions.container.height) / 2 +
+                        normalizedItemDimensions.item.height +
+                        normalizedItemDimensions.itemWithPadding.height,
+                    0,
+                ]} */
                 color="white"
             />
             <gridHelper

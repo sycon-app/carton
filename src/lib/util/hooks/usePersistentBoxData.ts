@@ -9,18 +9,27 @@ import useIndexedDB from "./useIndexedDB";
 
 export default function usePersistentBoxData(noDbWrite = false) {
     const [boxes, setBoxes] = useState<BoxData[]>();
-    const { indexedDB: boxDB } = useIndexedDB<BoxDBSchema>("carton", "boxes");
+    const { indexedDB: boxDB } = useIndexedDB<BoxDBSchema>(
+        "carton",
+        "boxes2",
+        undefined,
+        2
+    );
     const [isRunningDBTransaction, setIsRunningDBTransaction] = useState(false);
 
     const initializeDB = async () => {
         if (noDbWrite || !boxDB) return;
 
-        if (localStorage.getItem("initial_set")) return;
-        localStorage.setItem("initial_set", "true");
+        if (
+            localStorage.getItem("db_version") &&
+            localStorage.getItem("db_version") === "2"
+        )
+            return;
+        localStorage.setItem("db_version", "2");
 
         setIsRunningDBTransaction(true);
 
-        const transaction = boxDB.transaction("boxes", "readwrite");
+        const transaction = boxDB.transaction("boxes2", "readwrite");
 
         await Promise.all([
             ...boxDefaults.map((box) => transaction.store.put(box)),
@@ -37,7 +46,7 @@ export default function usePersistentBoxData(noDbWrite = false) {
         setIsRunningDBTransaction(true);
 
         (async () => {
-            const dbData = await boxDB.getAll("boxes");
+            const dbData = await boxDB.getAll("boxes2");
 
             if (dbData.length > 0) {
                 setBoxes(dbData);
@@ -63,9 +72,9 @@ export default function usePersistentBoxData(noDbWrite = false) {
         setIsRunningDBTransaction(true);
 
         (async () => {
-            await boxDB.clear("boxes");
+            await boxDB.clear("boxes2");
 
-            const transaction = boxDB.transaction("boxes", "readwrite");
+            const transaction = boxDB.transaction("boxes2", "readwrite");
 
             await Promise.all([
                 ...boxes.map((box) => transaction.store.put(box)),

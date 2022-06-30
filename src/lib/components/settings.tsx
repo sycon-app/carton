@@ -1,3 +1,5 @@
+/* eslint-disable sonarjs/cognitive-complexity */
+/* eslint-disable no-underscore-dangle */
 import { AddIcon, MinusIcon, SettingsIcon } from "@chakra-ui/icons";
 import {
     Drawer,
@@ -24,6 +26,8 @@ import {
 import { useContext, useEffect, useRef, useState } from "react";
 
 import { GlobalContext } from "lib/context/global";
+import { volume } from "lib/util/dimensions";
+import { selectInput } from "lib/util/selectInput";
 
 export default function Settings() {
     const { isOpen, onOpen, onClose } = useDisclosure();
@@ -32,14 +36,17 @@ export default function Settings() {
     const [boxLength, setBoxLength] = useState<number>();
     const [boxWidth, setBoxWidth] = useState<number>();
     const [boxHeight, setBoxHeight] = useState<number>();
+    const [weightRating, setWeightRating] = useState<number>();
     const [prefersNoStacking, setPrefersNoStacking] = useState(false);
     const [prefersNoAdjusting, setPrefersNoAdjusting] = useState(false);
     const lInputRef = useRef<HTMLInputElement>(null);
     const wInputRef = useRef<HTMLInputElement>(null);
     const hInputRef = useRef<HTMLInputElement>(null);
+    const weightInputRef = useRef<HTMLInputElement>(null);
     const [isBLengthInvalid, setIsBLengthInvalid] = useState(false);
     const [isBWidthInvalid, setIsBWidthInvalid] = useState(false);
     const [isBHeightInvalid, setIsBHeightInvalid] = useState(false);
+    const [isWeightRatingInvalid, setIsWeightRatingInvalid] = useState(false);
 
     useEffect(() => {
         if (
@@ -72,18 +79,27 @@ export default function Settings() {
         }
 
         if (
+            weightRating !== undefined &&
+            (weightRating <= 0 || weightRating % 1 !== 0)
+        ) {
+            setIsWeightRatingInvalid(true);
+        } else {
+            setIsWeightRatingInvalid(false);
+        }
+
+        if (
             boxes?.some(
                 (boxData) =>
-                    boxData.dimensions.length === boxLength &&
-                    boxData.dimensions.width === boxWidth &&
-                    boxData.dimensions.height === boxHeight
+                    boxData.meta._id ===
+                    `${boxData.dimensions.length}.${boxData.dimensions.width}.${boxData.dimensions.height}-${boxData.meta.weightRating}`
             )
         ) {
             setIsBLengthInvalid(true);
             setIsBWidthInvalid(true);
             setIsBHeightInvalid(true);
+            setIsWeightRatingInvalid(true);
         }
-    }, [boxLength, boxWidth, boxHeight, boxes]);
+    }, [boxLength, boxWidth, boxHeight, weightRating, boxes]);
 
     return (
         <>
@@ -103,7 +119,7 @@ export default function Settings() {
                     </DrawerHeader>
 
                     <DrawerBody>
-                        <HStack align="stretch" mb={1}>
+                        <HStack align="stretch" mb={4}>
                             <VStack align="start">
                                 <FormControl isInvalid={isBLengthInvalid}>
                                     <FormLabel
@@ -129,17 +145,13 @@ export default function Settings() {
                                             }
                                             onChange={(e) =>
                                                 setBoxLength(
-                                                    Number(e.target.value) || 1
+                                                    Number(e.target.value) || 0
                                                 )
                                             }
                                             ref={lInputRef}
-                                            onClick={() => {
-                                                if (
-                                                    (lInputRef.current?.value
-                                                        .length ?? 0) > 0
-                                                )
-                                                    lInputRef.current?.select();
-                                            }}
+                                            onClick={() =>
+                                                selectInput(lInputRef)
+                                            }
                                         />
                                     </NumberInput>
                                 </FormControl>
@@ -173,17 +185,13 @@ export default function Settings() {
                                             }
                                             onChange={(e) =>
                                                 setBoxWidth(
-                                                    Number(e.target.value) || 1
+                                                    Number(e.target.value) || 0
                                                 )
                                             }
                                             ref={wInputRef}
-                                            onClick={() => {
-                                                if (
-                                                    (wInputRef.current?.value
-                                                        .length ?? 0) > 0
-                                                )
-                                                    wInputRef.current?.select();
-                                            }}
+                                            onClick={() =>
+                                                selectInput(wInputRef)
+                                            }
                                         />
                                     </NumberInput>
                                 </FormControl>
@@ -217,28 +225,54 @@ export default function Settings() {
                                             }
                                             onChange={(e) =>
                                                 setBoxHeight(
-                                                    Number(e.target.value) || 1
+                                                    Number(e.target.value) || 0
                                                 )
                                             }
                                             ref={hInputRef}
-                                            onClick={() => {
-                                                if (
-                                                    (hInputRef.current?.value
-                                                        .length ?? 0) > 0
-                                                )
-                                                    hInputRef.current?.select();
-                                            }}
+                                            onClick={() =>
+                                                selectInput(hInputRef)
+                                            }
                                         />
                                     </NumberInput>
                                 </FormControl>
                             </VStack>
                         </HStack>
+                        <FormControl isInvalid={isWeightRatingInvalid} mb={2}>
+                            <FormLabel
+                                fontWeight="bold"
+                                fontSize="xs"
+                                textTransform="uppercase"
+                                htmlFor="weightrating"
+                            >
+                                Max content weight
+                            </FormLabel>
+                            <NumberInput
+                                size="sm"
+                                id="weightrating"
+                                value={weightRating}
+                            >
+                                <NumberInputField
+                                    p={4}
+                                    placeholder="Weight rating"
+                                    color={
+                                        isBHeightInvalid ? "red.500" : undefined
+                                    }
+                                    onChange={(e) =>
+                                        setWeightRating(
+                                            Number(e.target.value) || 0
+                                        )
+                                    }
+                                    ref={weightInputRef}
+                                    onClick={() => selectInput(weightInputRef)}
+                                />
+                            </NumberInput>
+                        </FormControl>
                         <Checkbox
                             onChange={(e) =>
                                 setPrefersNoStacking(e.target.checked)
                             }
                         >
-                            Stacking prohibited
+                            Prefer no stacking
                         </Checkbox>
                         <br />
                         <Checkbox
@@ -247,7 +281,7 @@ export default function Settings() {
                                 setPrefersNoAdjusting(e.target.checked)
                             }
                         >
-                            Adjusting prohibited
+                            Prefer no adjusting
                         </Checkbox>
                         <Button
                             w="full"
@@ -260,14 +294,16 @@ export default function Settings() {
                                 isBHeightInvalid ||
                                 !boxLength ||
                                 !boxWidth ||
-                                !boxHeight
+                                !boxHeight ||
+                                !weightRating
                             }
                             onClick={() => {
                                 if (
                                     !boxes ||
                                     !boxLength ||
                                     !boxWidth ||
-                                    !boxHeight
+                                    !boxHeight ||
+                                    !weightRating
                                 )
                                     return;
 
@@ -275,8 +311,11 @@ export default function Settings() {
                                     ...boxes,
                                     {
                                         meta: {
+                                            _id: `${boxLength}.${boxWidth}.${boxHeight}-${weightRating}`,
                                             preferNoStack: prefersNoStacking,
                                             preferNoAdjust: prefersNoAdjusting,
+                                            weightRating:
+                                                weightRating ?? Infinity,
                                         },
                                         dimensions: {
                                             length: boxLength,
@@ -289,6 +328,7 @@ export default function Settings() {
                                 setBoxWidth(0);
                                 setBoxLength(0);
                                 setBoxHeight(0);
+                                setWeightRating(0);
                             }}
                         >
                             Add
@@ -307,13 +347,22 @@ export default function Settings() {
                         )}
                         {boxes
                             ?.sort((a, b) => {
+                                if (
+                                    a.dimensions.length === b.dimensions.length
+                                ) {
+                                    return (
+                                        volume(a.dimensions) -
+                                        volume(b.dimensions)
+                                    );
+                                }
+
                                 return (
                                     a.dimensions.length - b.dimensions.length
                                 );
                             })
                             .map((box) => (
                                 <HStack
-                                    key={`${box.dimensions.length}x${box.dimensions.width}x${box.dimensions.height}`}
+                                    key={box.meta._id}
                                     py={2}
                                     borderTopWidth="thin"
                                 >
@@ -321,15 +370,25 @@ export default function Settings() {
                                         {box.dimensions.length}x
                                         {box.dimensions.width}x
                                         {box.dimensions.height}{" "}
-                                        {box.meta.preferNoStack && (
-                                            <Badge colorScheme="red">
-                                                No stacking
-                                            </Badge>
-                                        )}{" "}
-                                        {box.meta.preferNoAdjust && (
-                                            <Badge colorScheme="red">
-                                                No adjusting
-                                            </Badge>
+                                        <Badge colorScheme="blue">
+                                            Weight rating:{" "}
+                                            {box.meta.weightRating}
+                                        </Badge>
+                                        {(box.meta.preferNoAdjust ||
+                                            box.meta.preferNoStack) && (
+                                            <>
+                                                <br />
+                                                {box.meta.preferNoStack && (
+                                                    <Badge colorScheme="red">
+                                                        No stacking
+                                                    </Badge>
+                                                )}
+                                                {box.meta.preferNoAdjust && (
+                                                    <Badge colorScheme="red">
+                                                        No adjusting
+                                                    </Badge>
+                                                )}
+                                            </>
                                         )}
                                     </Text>
                                     <Spacer />

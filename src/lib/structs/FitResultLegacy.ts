@@ -1,6 +1,7 @@
 import type { BoxDimensions } from "./BoxDimensions";
 
-export interface FitResult {
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export interface FitResult_Legacy {
     item: BoxDimensions;
     itemWithPadding: BoxDimensions;
     isItemRotated: boolean;

@@ -1,58 +1,54 @@
-import { useMemo } from "react";
-
 import { print } from "../print";
-import type { FitResult } from "lib/structs/FitResult";
+import type { FitData } from "lib/helpers/Fit";
 
-export default function useInstructionsPrinting(fitResult?: FitResult) {
+export default function useInstructionsPrinting(fitResult?: FitData) {
     const {
-        itemWithPadding,
-        unalteredDimensions,
-        alteredDimensions,
         isItemRotated,
-        stackCount,
+        unalteredContainerDimensions,
+        alteredContainerDimensions,
+        containerCutDownAmount,
+        containerStackCount,
+        containerAdjustAmount,
+        tags,
     } = fitResult ?? {
-        item: { length: 0, width: 0, height: 0 },
-        itemWithPadding: { length: 0, width: 0, height: 0 },
-        unalteredDimensions: { length: 0, width: 0, height: 0 },
-        alteredDimensions: { length: 0, width: 0, height: 0 },
         isItemRotated: false,
-        stackCount: 0,
+        unalteredContainerDimensions: { length: 0, width: 0, height: 0 },
+        alteredContainerDimensions: { length: 0, width: 0, height: 0 },
+        containerCutDownAmount: 0,
+        containerStackCount: 0,
+        containerAdjustAmount: 0,
+        tags: {},
     };
-
-    const isAdjusted = useMemo(() => {
-        return (
-            unalteredDimensions.length !== alteredDimensions.length ||
-            unalteredDimensions.width !== alteredDimensions.width
-        );
-    }, [unalteredDimensions, alteredDimensions]);
 
     return () => {
         let printText = "";
 
-        printText += `${unalteredDimensions.length}x${unalteredDimensions.width}x${unalteredDimensions.height}`;
+        printText += `${unalteredContainerDimensions.length}x${unalteredContainerDimensions.width}x${unalteredContainerDimensions.height}`;
         printText += " -> ";
-        printText += `${alteredDimensions.length}x${alteredDimensions.width}x${alteredDimensions.height}\n\n`;
+        printText += `${alteredContainerDimensions.length}x${alteredContainerDimensions.width}x${alteredContainerDimensions.height}\n\n`;
 
         if (isItemRotated) {
             printText += "- Item laid on its side\n";
         }
 
-        if (stackCount > 1) {
-            printText += `- Stacked ${stackCount}x\n`;
+        if (tags.MODIFICATIONS_STACKED) {
+            printText += `- Stacked ${containerStackCount}x\n`;
         }
 
-        if (isAdjusted) {
-            printText += `- Adjusted (${
-                alteredDimensions.length - unalteredDimensions.length
-            }})\n`;
+        if (tags.MODIFICATIONS_ADJUSTED) {
+            printText += `- Adjusted (${containerAdjustAmount}})\n`;
         }
 
-        if (alteredDimensions.height - itemWithPadding.height !== 0) {
-            printText += `- Can be cut down to ${alteredDimensions.length}x${
-                alteredDimensions.width
-            }x${itemWithPadding.height} (-${
-                alteredDimensions.height - itemWithPadding.height
-            })\n`;
+        if (containerCutDownAmount > 0) {
+            printText += `- Can be cut down to ${
+                alteredContainerDimensions.length
+            }x${alteredContainerDimensions.width}x${
+                alteredContainerDimensions.height - containerCutDownAmount
+            } (-${containerCutDownAmount})\n`;
+        }
+
+        if (tags.WEIGHT_EXCESSIVE) {
+            printText += "May need to be reinforced";
         }
 
         print(printText);
